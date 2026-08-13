@@ -11,11 +11,23 @@ coverage state. Do NOT create a GitHub repo for it (eraith decides later).
 
 ## Per-rung structure
 
+In `~/forge/test-skills-eval` (what the agent-under-test may see — shaped
+exactly like a real user repo, nothing else):
+
 ```
 specs/RUNG<n>-<name>.md        Confluence-style spec for the rung services
 tickets/<KEY>.md               simulated Jira tickets — MIXED quality (below)
+plans/<KEY>.md                 the plan the reviewer legitimately reads
+<service code, features/, step defs, branches per coverage state>
+```
+
+In `~/forge/test-skills-eval-truth` (ground truth — OUTSIDE the eval repo,
+never visible to the agent-under-test):
+
+```
 plans/reference/<KEY>.md       hand-authored reference plan = planner ground truth
 EXPECTED/<branch>.md           per-branch reviewer ground truth
+scorecards/                    per-run graded results
 ```
 
 Ticket file format (planner consumes these as pasted content — this box has
@@ -37,6 +49,32 @@ tests). Rung 5 adds contradictory ACs and ticket-vs-MR scope mismatches.
 **Ground-truth discipline:** EXPECTED/ and reference plans are written from
 the spec+tickets BEFORE any agent runs — never derived from agent output.
 No grading your own homework.
+
+## Independence rules (the point of the whole exercise)
+
+The measurement is: *would an independent agent, given only what a real
+user would have, reproduce the expected outcomes?* So:
+
+1. **Clean-room invocation.** The agent-under-test is a FRESH `claude -p`
+   session per run: it gets the skill (SKILL.md + references), the eval
+   repo checkout, and the task input (ticket file / MR-style diff) —
+   nothing else. It is never the same session that built the scenario,
+   and it inherits no conversation context from Forge chains.
+2. **Truth stays invisible.** The eval repo must contain no
+   EXPECTED/, no reference plans, no scorecards, no FORGE.md/
+   PROVING-GROUND.md — anything that leaks answers lives in
+   `test-skills-eval-truth`, which the agent-under-test has no path to.
+   Before each run, verify the checkout contains no truth artifacts.
+3. **Separate grader.** A different agent (or deterministic diff where
+   possible — verdict tables are parseable) compares the clean-room output
+   against EXPECTED and writes the scorecard. The grader never edits the
+   skill; the builder never grades.
+4. **Stability = fresh sessions.** The 3x stability requirement means 3
+   independent clean-room runs, not one session asked three times.
+5. **Failures fix the skill, not the run.** When a clean-room run misses,
+   the calibration change goes into the skill/rubric via commit — then ALL
+   runs for that rung restart. Never nudge a run with extra hints; a hint
+   the skill needed is a sentence the rubric was missing.
 
 ## The ladder
 
