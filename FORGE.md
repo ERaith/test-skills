@@ -66,21 +66,16 @@ committed steps — never a big broken WIP.
       present in the fixtures. Record agreement + disagreements in the
       Log; fix rubric/skill where the skill is wrong; note CLI
       discrepancies (do not modify the CLI copy).
-- [ ] 5. **Golden eval repo** (~/forge/test-skills-eval): small Go API
-      slice (order-lifecycle style; Spanner emulator + Kafka via
-      testcontainers if docker cooperates, in-memory fakes if not — note
-      which in the Log), godog via go test+TestingT, a plan file, and
-      branches with SEEDED, DOCUMENTED coverage states: full; one AC
-      missing; layer mismatch; unwired scenario; name-gaming test (right
-      name, no assertion); missing dual-write half. EXPECTED.md per branch.
-- [ ] 6. **Eval sweep + calibration.** Run the reviewer against every
-      golden branch 3×. Measure accuracy (verdict vs EXPECTED.md) and
-      stability (same verdict across runs). Log the matrix. Where wrong or
-      unstable: tighten rubric wording (rules, not vibes), re-sweep.
-- [ ] 7. **Planner eval.** Run the planner against 2-3 synthetic tickets
-      (write them, with known-good reference plans): does it catch the
-      untestable AC? produce the implied failure paths? reuse step
-      vocabulary? Log + refine.
+- [ ] 5. **Proving ground rung 1** (see PROVING-GROUND.md): build the
+      single-service scenario + mixed-quality tickets + reference plans +
+      EXPECTED branches, then run the full eval cycle (planner + reviewer
+      3x, scorecard, calibrate until the advance gate passes).
+- [ ] 6. **Proving ground rungs 2-3**: add Spanner emulator rung, eval
+      cycle to gate; then Kafka rung, eval cycle to gate. One rung at a
+      time — never build ahead of a failed gate.
+- [ ] 7. **Proving ground rungs 4-5**: 3-microservice rung, eval cycle;
+      then the mess batch (contradictory ACs, ticket-vs-MR scope
+      mismatches). Scorecards to the Log.
 - [ ] 8. **Polish pass from evidence.** Fold everything the evals taught
       back into: rubric, godog-standards, SKILL.md steps, README. Write the
       planning-sync summary in the Log (eval design + results are research
