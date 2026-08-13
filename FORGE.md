@@ -98,7 +98,7 @@ changed in the queue)*
 - `completeness-rubric.md` gains a **Confidence (per verdict)** section: the
   `high`/`medium`/`low` buckets (same spelling as the CLI's
   `ConfidenceSchema`, so reports are comparable verdict-for-verdict), a
-  derivation table for all three verdicts × three buckets, four caps, the
+  derivation table for all three verdicts × three buckets, three caps, the
   "what would raise it" requirement, and overall-report confidence.
 - `test-reviewer/SKILL.md` gains **Step 3b** (refute every `covered` before
   keeping it — outcome vocabulary refuted / survived-caveat / survived) and
