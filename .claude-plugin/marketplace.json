@@ -1,0 +1,12 @@
+{
+  "name": "test-skills-marketplace",
+  "description": "ERaith SDET tooling: test planning and coverage review skills",
+  "owner": { "name": "ERaith", "url": "https://github.com/ERaith" },
+  "plugins": [
+    {
+      "name": "test-skills",
+      "source": "./",
+      "description": "Test planner (Jira ticket → per-AC test plan) and test reviewer (MR diff + plan → coverage verdict with evidence)."
+    }
+  ]
+}

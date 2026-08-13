@@ -1,0 +1,10 @@
+{
+  "name": "test-skills",
+  "displayName": "Test Skills",
+  "description": "SDET workflow skills: generate per-AC test plans from Jira tickets, and review MR test coverage (Go unit tests + godog feature files) against those plans.",
+  "author": { "name": "ERaith" },
+  "homepage": "https://github.com/ERaith/test-skills",
+  "repository": "https://github.com/ERaith/test-skills",
+  "license": "MIT",
+  "keywords": ["testing", "sdet", "godog", "test-plan", "coverage-review", "jira", "gitlab"]
+}
