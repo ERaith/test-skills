@@ -35,6 +35,78 @@ not). Judgment calls are allowed and must be explained in the report.
    runtime, no creds), the report says so — static evidence stands but is
    labeled unexecuted.
 
+## Confidence (per verdict)
+
+Every verdict carries a confidence: `high` / `medium` / `low` — the same
+three buckets, spelled the same way, as the `test-planner` CLI
+(`ConfidenceSchema` in `src/schemas.ts`; coarse buckets because models
+calibrate badly on continuous scores and structured output can't range-check
+a float). A skill report and a CLI report are therefore comparable
+verdict-for-verdict. Bucket calibration follows *LLM-as-a-Judge for Scalable
+Test Coverage Evaluation* (arXiv:2512.01232); the derivation table below is
+house-standard.
+
+Confidence answers **"how sure are we this verdict is right?"** — not "how
+good is the coverage". A `missing` verdict is usually `high` confidence.
+Confidence never changes a verdict and never changes SUFFICIENT /
+INSUFFICIENT; it tells the SDET where to spend their own eyes.
+
+**Confidence is derived, not felt.** Compute it from the two structural
+properties below. Never adjust it because the change looks careful, the
+author is senior, the diff is small, or the report feels harsh.
+
+- **executed** — the test was actually run during this review and passed
+  (`go test ./...`, or the `@integration` godog suite against a live
+  container runtime). Evidence read but not run is **static-only**.
+- **skeptic-survived** — the `covered` verdict went through an explicit
+  refutation attempt (SKILL.md Step 3b) that failed to break it.
+
+| Verdict | `high` | `medium` | `low` |
+|---|---|---|---|
+| `covered` | skeptic-survived **and** executed | static-only evidence, or survived refutation with a caveat you could not fully rule out | the AC→test mapping needed interpretation, or a step's wired-ness could not be confirmed |
+| `partial` | the shortfall axis is mechanically checkable — a named assertion is absent from a file you read, or the layer contradicts the plan | the shortfall took judgment (does asserting 200 satisfy "returns the order"?) | you are unsure whether the right reading is `partial` or `missing`; say which way you leaned |
+| `missing` | the whole evidence surface was inventoried — both sources enumerated, greps re-run — and nothing exists | part of the surface was unavailable (repo tree truncated, only the MR diff readable, step registrations unreadable) | inputs themselves were missing: ACs not fetched from the ticket system, or the repo could not be read |
+
+Caps, applied after the table — lowest wins:
+
+1. **No `high`-confidence `covered` without an execution.** Static-only
+   evidence caps `covered` at `medium`, however clean the code reads.
+2. **Un-refindable citations are not a confidence problem.** A citation you
+   cannot re-find by grep makes the verdict `missing` at `low` confidence —
+   the same downgrade the CLI's normalizer applies to hallucinated evidence.
+3. **Ad-hoc plan caps the overall report** (below) at `medium`, and caps any
+   verdict whose reasoning leaned on a layer assignment at `medium` — you
+   invented that layer assignment minutes ago; it was never agreed.
+
+### What would raise it
+
+Every verdict below `high` carries a one-line **"what would raise it"**: the
+specific, executable action that would move this verdict up a bucket, naming
+the thing. "Run the `@integration` suite (needs a container runtime)" or
+"assert `data.error.code`, not only the 409 status" — never "add more tests"
+or "investigate further". If nothing could raise it (the AC is genuinely
+ambiguous and needs product input), say that instead and name who decides.
+
+### Overall report confidence
+
+The lowest per-AC confidence in the report, then capped by:
+
+- reviewed against an ad-hoc plan (no `plans/<KEY>.md`) → cap `medium`
+- suite not runnable (no container runtime, no creds) → cap `medium`
+- ACs not obtained from the ticket system (read off the MR description) →
+  cap `low`
+
+State it on the verdict line. A `SUFFICIENT` resting on any `low`-confidence
+`covered` verdict must name that AC on the verdict line — a green report the
+reviewer half-believes is worse than a red one, because nobody re-checks it.
+
+**State a systemic limitation once.** If a limitation applies equally to
+every verdict — the suite could not run, the repo has no step-definition
+layer to inspect, the ticket system was unreachable — it belongs on the
+verdict line as an overall cap, not repeated as a per-verdict downgrade.
+Per-verdict confidence exists to discriminate *between* verdicts; a column
+reading `low, low, low, low` tells the SDET nothing about where to look.
+
 ## Assertion-quality smells (anti-gaming)
 
 Adapted from the peer-reviewed test-smell catalog at testsmells.org

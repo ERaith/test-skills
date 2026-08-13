@@ -1,6 +1,6 @@
 ---
 name: test-reviewer
-description: Review a merge request's test coverage against the ticket's test plan for Go Spanner+Kafka API services. Classifies each acceptance criterion as covered/partial/missing with cited evidence from Go unit tests and godog feature files. Advisory only — reports, does not gate. Input is an MR reference (URL, !id, or branch) and optionally the ticket key.
+description: Review a merge request's test coverage against the ticket's test plan for Go Spanner+Kafka API services. Classifies each acceptance criterion as covered/partial/missing with cited evidence from Go unit tests and godog feature files, plus a per-AC confidence (high/medium/low) and what would raise it. Advisory only — reports, does not gate. Input is an MR reference (URL, !id, or branch) and optionally the ticket key.
 argument-hint: "[MR-REF] [TICKET-KEY]"
 disable-model-invocation: true
 ---
@@ -56,6 +56,12 @@ Two evidence sources; inventory both — they satisfy different layers:
   `@integration`-tagged godog suite (via the repo's integration build tag)
   when a container runtime is available. A failing test is not evidence.
 
+Tag every piece of evidence you inventory as **executed** (you ran it in this
+review and it passed) or **static-only** (you read it). That tag is an input
+to confidence in Step 3c, so record it as you go — reconstructing it at
+report time is how "we ran the suite" quietly becomes true of tests that
+never ran.
+
 ## Step 3 — Classify
 
 For **each AC** and **each planned test**, assign `covered` / `partial` /
@@ -82,6 +88,50 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
   including the plan's `Verifies: implied` tests. Uncovered applicable
   failure paths are gaps even when every AC is green.
 
+## Step 3b — Try to break every `covered`
+
+A `covered` verdict is a claim, and the claim is cheap until something has
+attacked it. For each verdict you are about to call `covered`, make one
+honest attempt to refute it: assume the AC is *not* covered and go find the
+reason. The standard attacks:
+
+- the assertion checks a proxy (status code, `err == nil`) instead of the
+  outcome the AC actually names;
+- the scenario is unwired or half-wired — one step has no registration;
+- the fixture makes the assertion pass regardless of the behavior under
+  test (a seeded row, a stubbed response asserted back);
+- the row is asserted only through the API's own read path, so a symmetric
+  write/read bug cancels out;
+- the test is excluded in the configuration CI actually runs (build tag,
+  tag expression, `t.Skip` behind an env var).
+
+Record one outcome per verdict:
+
+- **refuted** — the attack lands. It is not `covered`; downgrade to
+  `partial` or `missing` and cite what broke it.
+- **survived-caveat** — the attack does not land, but it surfaced something
+  you could not fully rule out. Stays `covered`, confidence capped at
+  `medium`, and the caveat goes in Notes.
+- **survived** — the attack fails cleanly.
+
+Queue item 1 replaces this inline pass with one skeptic agent per `covered`
+verdict, running in parallel. That vocabulary — refuted / survived-caveat /
+survived — is the contract between the two; the mechanism changes, the
+outcomes and their confidence consequences do not.
+
+## Step 3c — Assign confidence
+
+Give **every** verdict — AC and planned test alike — a `high` / `medium` /
+`low` confidence, derived by the rubric's confidence table and caps from two
+recorded facts: executed-vs-static-only (Step 2) and the Step 3b outcome.
+Do not eyeball it, and do not let a clean-looking diff raise it.
+
+Then, for every verdict below `high`, write the one-line **what would raise
+it**: the specific action that moves this verdict up a bucket. Finally take
+the overall report confidence — the lowest per-AC confidence, capped for an
+ad-hoc plan, an unrunnable suite, or ACs that never came from the ticket
+system.
+
 ## Step 4 — Report
 
 Emit the report in this shape (stable, so future tooling can parse it):
@@ -90,15 +140,23 @@ Emit the report in this shape (stable, so future tooling can parse it):
 # Coverage review — <TICKET-KEY> / MR <ref>
 
 **Verdict: SUFFICIENT | INSUFFICIENT** (plan: plans/<KEY>.md | ad-hoc)
+**Confidence: medium** — static-only: the @integration suite did not run (no
+container runtime)
 
-| AC | Verdict | Evidence |
-|----|---------|----------|
-| AC1 | covered | features/order_lifecycle.feature "Pay a pending order" — asserts status 200 + data.status "paid" |
-| AC3 | partial | handlers/pay_test.go TestPay/rejects_paid — asserts 409 but not error.code |
-| AC4 | missing | — |
+| AC | Verdict | Confidence | Evidence |
+|----|---------|------------|----------|
+| AC1 | covered | high | features/order_lifecycle.feature "Pay a pending order" — asserts status 200 + data.status "paid"; executed, survived refutation |
+| AC2 | covered | medium | features/order_lifecycle.feature "Paying publishes order.paid" — asserts the event; static-only |
+| AC3 | partial | high | handlers/pay_test.go TestPay/rejects_paid — asserts 409 but not error.code |
+| AC4 | missing | high | — |
+
+**What would raise it** (one line per verdict below `high`)
+- AC2 (medium → high): run the `@integration` suite (`go test -tags
+  integration ./features/...` with a container runtime) — the evidence is
+  read-only so far.
 
 ## Planned-test verdicts
-<same table for T1..Tn>
+<same four-column table for T1..Tn, same "what would raise it" treatment>
 
 ## Gaps and recommended tests
 <per gap: what's missing, plus a ready-to-add skeleton — Gherkin reusing
@@ -107,11 +165,18 @@ case for unit gaps>
 
 ## Notes
 <layer mismatches, unwired scenarios, name/assertion mismatches, dual-write
-halves missing, line-coverage signal if computed>
+halves missing, refutation caveats from Step 3b, line-coverage signal if
+computed>
+
+Confidence: <n> high / <n> medium / <n> low across <n> verdicts.
 ```
 
 `INSUFFICIENT` = any AC `missing`, or a judgment call per the rubric's
-severity guidance (explain it when you make it). Offer — do not do
+severity guidance (explain it when you make it). Confidence is not a
+tiebreaker: a `low`-confidence `covered` is still `covered`, and a
+`high`-confidence `partial` is still a gap. Low confidence means "look here
+yourself", which is why it goes on the verdict line rather than quietly
+softening the verdict. Offer — do not do
 unprompted — to post the report as an MR comment (`glab mr note`). Keep
 the report honest about its own limits: anything you could not verify
 (suite didn't run, Jira unreachable, no container runtime), say so

@@ -12,8 +12,10 @@ persistence and Kafka messaging. Two skills:
   up. Classifies every AC and planned test as covered / partial / missing
   with grep-verified evidence from Go unit tests AND godog feature files,
   walks the failure-path checklists (HTTP / Kafka consumer / Spanner
-  persistence), and reports SUFFICIENT / INSUFFICIENT. **Advisory only** —
-  it does not gate; an SDET makes the merge call.
+  persistence), and reports SUFFICIENT / INSUFFICIENT. Every verdict carries
+  a derived confidence (`high`/`medium`/`low`) and a line saying what would
+  raise it, so a green report tells you where it is thin. **Advisory only**
+  — it does not gate; an SDET makes the merge call.
 
 Both skills are explicit-invocation only (`disable-model-invocation`), so
 they never fire as a side effect of unrelated conversation.
@@ -46,14 +48,19 @@ files — change them by MR, and both skills pick the change up:
   quality rules, legacy tag-expression syntax, and the documented house
   deviation on Then-steps asserting Spanner rows/Kafka events.
 - `skills/test-reviewer/references/completeness-rubric.md` — verdict
-  definitions, the evidence bar (cite-or-missing, wired-means-wired),
-  assertion-quality smells (testsmells.org), layer matching, and the
-  failure-path checklists.
+  definitions, the evidence bar (cite-or-missing, wired-means-wired), the
+  confidence derivation (structural: skeptic-survived + executed = `high`;
+  static-only caps at `medium`), assertion-quality smells (testsmells.org),
+  layer matching, and the failure-path checklists.
 
 ## Relationship to the `test-planner` CLI
 
 Same plan format, same verdict vocabulary (`covered`/`partial`/`missing`),
-same exit-code philosophy. The CLI is the deterministic one-shot for CI;
+same confidence buckets (`high`/`medium`/`low`, per verdict — so reports from
+either side are comparable verdict-for-verdict), same exit-code philosophy.
+Where the CLI asks the model how confident it feels, the skills derive
+confidence from structure (was it executed? did it survive refutation?). The
+CLI is the deterministic one-shot for CI;
 these skills are the interactive/agentic surface for humans working a
 ticket. Plans produced by either are readable by both.
 
