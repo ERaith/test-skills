@@ -40,46 +40,51 @@ committed steps — never a big broken WIP.
   consecutive runs, or ~24h elapsed — then write a final summary Log entry,
   push, and end the loop.
 
+## Priority & process (revised 2026-08-14)
+
+Planner and reviewer are built **hand in hand, rung by rung** — the plan file
+is their shared interface, so each rung exercises BOTH. The pain we solve is
+ticket volume -> tangible testable plans fast (planner), with the reviewer
+checking MRs against those plans. Per-rung cycle:
+
+  1. Build the rung: scenario + mixed-quality tickets + ground truth.
+  2. Test BOTH skills: planner drafts plans; reviewer verdicts the MRs.
+  3. Produce results on the TARGET RUNTIME MODEL (Sonnet-class): planner
+     ship/rewrite/wrong + did-it-flag-bad-ACs; reviewer per-AC accuracy.
+  4. Update planner OR reviewer based on what the results show is missing.
+  5. MERGE TO MAIN — each rung is a merge-to-main milestone.
+  6. STOP. Human + Claude jointly decide the NEXT complexity increment
+     before the next rung. No autonomous climbing past a rung.
+
+Evidence rules: baseline before optimizing; every change justified by a
+measured eval delta; real SDET tickets replace synthetic ones as they arrive
+(synthetic tickets encode our assumptions — always flag them). Deferred until
+a rung's results demand it: fan-out as the default runtime path
+(calibration/high-assurance only), the SHA-keyed step catalog, and gating.
+The skeptic hold still governs whether a rung PASSES (PROVING-GROUND.md).
+
 ## Queue
 
-- [x] 1. **Agent fan-out in both skills.** Planner: parallel context agents
-      (ticket graph incl. dependent/blocking tickets + epic; Confluence
-      spec; repo suite inventory). Reviewer: parallel evidence-inventory
-      agents (unit tests / feature files / step wiring), then a skeptic
-      agent per `covered` verdict prompted to REFUTE it — only verdicts
-      surviving refutation stay `covered`.
-- [x] 2. **Confidence in the report.** Per-AC confidence column
-      (high/medium/low) + "what would raise it" line. Confidence is
-      structural: skeptic-survived + executed = high; static-only evidence
-      caps at medium; ad-hoc plan caps overall confidence. Mirror the CLI
-      fixtures' per-verdict confidence semantics.
-- [x] 3. **test-design-techniques.md reference** (planner references/, read
-      by both skills): equivalence partitioning, boundary value analysis,
-      state-transition testing, decision tables (ISTQB-grounded);
-      Hendrickson test-heuristics categories; RFC 9110 grounding for the
-      HTTP failure-path checklist. Wire into planner Step 4 (edge-case
-      derivation per AC) and reviewer Step 3 (edge-case gap check).
-- [ ] 4. **Smoke eval vs CLI fixtures.** Run the reviewer skill logic
-      against ~/forge/test-planner fixtures: tickets/PROJ-101.json +
-      features-full (expect SUFFICIENT) and features-partial (expect
-      INSUFFICIENT). Compare against the CLI's own plans/ and reports if
-      present in the fixtures. Record agreement + disagreements in the
-      Log; fix rubric/skill where the skill is wrong; note CLI
-      discrepancies (do not modify the CLI copy).
-- [ ] 5. **Proving ground rung 1** (see PROVING-GROUND.md): build the
-      single-service scenario + mixed-quality tickets + reference plans +
-      EXPECTED branches, then run the full eval cycle (planner + reviewer
-      3x, scorecard, calibrate until the advance gate passes).
-- [ ] 6. **Proving ground rungs 2-3**: add Spanner emulator rung, eval
-      cycle to gate; then Kafka rung, eval cycle to gate. One rung at a
-      time — never build ahead of a failed gate.
-- [ ] 7. **Proving ground rungs 4-5**: 3-microservice rung, eval cycle;
-      then the mess batch (contradictory ACs, ticket-vs-MR scope
-      mismatches). Scorecards to the Log.
-- [ ] 8. **Polish pass from evidence.** Fold everything the evals taught
-      back into: rubric, godog-standards, SKILL.md steps, README. Write the
-      planning-sync summary in the Log (eval design + results are research
-      question D1 evidence).
+- [x] 1. Agent fan-out in both skills (context/evidence lanes + skeptic).
+- [x] 2. Per-AC confidence in the reviewer report.
+- [x] 3. test-design-techniques.md reference (ISTQB/Hendrickson/RFC 9110),
+      wired into planner Step 4 + reviewer Step 3.
+- [~] 4. Reviewer CLI-fixture baseline — SUPERSEDED by R1 (which exercises
+      both skills on a richer scenario). Skip unless a quick reviewer-only
+      sanity number is wanted first.
+
+### Rungs — one at a time, human checkpoint between each
+
+- [ ] R1. **Single HTTP service.** Build the scenario + mixed-quality
+      tickets (one crisp, one vague/untestable AC, one missing failure
+      paths) + ground truth OUTSIDE the eval repo. Planner drafts plans;
+      reviewer verdicts the seeded branches (full / AC-missing / gamed-test
+      / unwired). Scorecard BOTH. Merge to main. STOP for the R2 decision.
+- [ ] R2+. **Decided jointly after R1's results** — not pre-committed. The
+      complexity menu to pick the next increment from: +Spanner emulator,
+      +Kafka produce/consume, +3 microservices, the mess batch
+      (contradictory ACs, ticket-vs-MR scope mismatch). Choose the next
+      increment from what R1 reveals is weak, not from a fixed sequence.
 
 ## Log
 

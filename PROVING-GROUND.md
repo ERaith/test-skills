@@ -76,6 +76,15 @@ user would have, reproduce the expected outcomes?* So:
    runs for that rung restart. Never nudge a run with extra hints; a hint
    the skill needed is a sentence the rubric was missing.
 
+## Process: one rung at a time, human checkpoint between (revised 2026-08-14)
+
+Rungs are NOT an autonomous climb. Each rung: build -> test BOTH skills ->
+produce results -> update planner/reviewer for what's missing -> MERGE TO
+MAIN -> STOP. Human + Claude then jointly choose the next complexity
+increment before the next rung. The list below is a MENU of increments to
+draw from, not a fixed sequence — pick the next from what the last rung's
+results show is weak.
+
 ## The ladder
 
 - **Rung 0** — CLI fixtures baseline (FORGE.md item 4). Sanity only.
