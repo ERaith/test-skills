@@ -42,7 +42,7 @@ committed steps — never a big broken WIP.
 
 ## Queue
 
-- [ ] 1. **Agent fan-out in both skills.** Planner: parallel context agents
+- [x] 1. **Agent fan-out in both skills.** Planner: parallel context agents
       (ticket graph incl. dependent/blocking tickets + epic; Confluence
       spec; repo suite inventory). Reviewer: parallel evidence-inventory
       agents (unit tests / feature files / step wiring), then a skeptic
@@ -171,3 +171,162 @@ derivation. Worth calling out in RESEARCH.md D1: the structural definition
 is what makes agent confidence auditable, and therefore what a Phase-3
 gating carve-out could actually key on ("gate only on high-confidence
 verdicts") — self-reported confidence could never carry that weight.
+
+### 2026-08-14 — queue item 1: agent fan-out
+
+**Done.** Both skills now fan out, and the rules for doing so live in one
+new shared reference, `skills/test-planner/references/agent-fanout.md`
+(planner-side by the same convention item 3 uses for shared docs; the
+reviewer links it through `${CLAUDE_PLUGIN_ROOT}`).
+
+- **Planner Step 1** dispatches the context wave: **A1** ticket graph (the
+  ticket verbatim, its epic, and every linked/blocking/dependent ticket —
+  including ACs in a *linked* ticket that constrain this one), **A2**
+  Confluence spec (specifically: what the spec says that the ticket does
+  not), **A3** repo suite inventory (scenarios+tags, every step
+  registration verbatim, how the integration suite is executed, unit-test
+  layout). New **Step 2** merges the wave; old Steps 3-5 keep their
+  numbers.
+- **Reviewer Step 2** dispatches the evidence wave: **B1** unit tests
+  (what each test *asserts*, quoted), **B2** feature files (every step
+  verbatim), **B3** step wiring (patterns, bindings, reachability, and
+  what each binding actually touches).
+- **Reviewer Step 3b** dispatches one skeptic agent per `covered`
+  candidate, each given one AC, one citation, the repo path and the attack
+  list — and nothing else.
+
+**Design decisions, and why.**
+
+1. **Agents gather, the caller decides.** A lane returns facts with
+   citations — never a verdict, a confidence or an AC id. Three reasons,
+   in order: (a) traceability — a verdict assembled from a subagent's
+   *conclusion* has no citation the caller ever saw, which launders an
+   unverified claim into the report and quietly voids the rubric's
+   cite-or-it-didn't-happen bar; (b) stability — enumeration reproduces
+   across runs, judgment distributed over N sampled sessions does not;
+   (c) one rubric — the rubric lives in the caller's context, so a judging
+   subagent would either judge without it or need it pasted per lane,
+   where it forks. The skeptic lane is the single deliberate exception,
+   and even there the caller applies the outcome.
+2. **B3 is blind to B2, and the caller does the matching.** The most
+   gameable judgment in the whole review is wired-means-wired. One agent
+   that reads a scenario and *then* hunts for its steps accepts a
+   near-match, because it knows what it is hoping to find. B3 is never
+   told which scenarios exist; it inventories registrations. The caller
+   matches B2's verbatim step strings against B3's pattern list. This is
+   the main reason the lanes are split the way item 1 specified them
+   rather than "one agent per evidence source".
+3. **The evidence bar is symmetric.** A refutation is a claim too. A
+   skeptic's `refuted` only moves a verdict if the caller can re-find its
+   citation; an uncitable objection becomes `survived-caveat`. Without
+   this, fan-out just adds a machine for downgrading verdicts on vibes —
+   the mirror image of the optimism the rubric already refuses.
+4. **Every agent citation is re-grepped before it reaches output.**
+   Fan-out multiplies the number of claims; it must not multiply the
+   number of unchecked claims. A lane finding that cannot be re-found is
+   discarded and the lane drops to `partial`.
+5. **AC numbering happens once, in the caller, from A1's verbatim block.**
+   No lane numbers or renumbers ACs. `AC<n>` ids that shift between runs
+   make every downstream verdict incomparable, which would wreck the
+   item 5-7 scorecards before they start.
+6. **Verbatim prompt templates, bounded scope per lane.** An improvised
+   "look around and tell me about testing" prompt is exactly how two runs
+   of one review return different evidence sets. Fan-out is a stability
+   *risk* as much as a quality gain, and the controls are all in the
+   reference.
+7. **Injection guard on every lane prompt** — repo/ticket/spec content is
+   untrusted data, never instructions. Mirrors the CLI's `VERIFY_SYSTEM`
+   guard (`src/lib/prompts.ts`); a fanned-out reviewer has more mouths to
+   feed poisoned Gherkin to than a single session did.
+8. **`not-found` is mandatory envelope output.** "No registration matching
+   `^a task exists$`" is what produces a `missing` verdict. A lane that
+   reports only what exists biases every downstream verdict green.
+9. **No confidence semantics changed.** Item 2 wrote its
+   refuted/survived-caveat/survived vocabulary *as the contract item 1
+   would implement against*, and that held exactly — Step 3b's mechanism
+   swapped with no edit to the rubric's derivation table or caps. The
+   rubric's `skeptic-survived` definition gained one clause (independent
+   agent where a runtime exists, the same attacks inline where it does
+   not, refutations held to the citation bar). Whether independent
+   skepticism actually flips verdicts that inline skepticism keeps is left
+   as a *measured* question for rung 1 rather than priced in as a cap
+   invented here.
+10. **The fallback never skips a lane.** No subagent runtime → do every
+    lane inline, in lane order, same scope, same envelope, and say so (in
+    the plan summary / on the verdict line). The wave structure is about
+    coverage of surfaces; parallelism is only the speed-up.
+
+**Verified.** No Go in this repo, so build/test are N/A; the checks that
+apply:
+
+- `claude plugin validate` passes (the one intentional no-version warning).
+- All 8 reference links across both SKILL.md files resolve, including the
+  two new `${CLAUDE_PLUGIN_ROOT}` ones (script-checked, 0 broken).
+- `plan-format.md` byte-identical — `git diff --stat` on it is empty, so
+  CLI plan compatibility is untouched.
+- **Lane scopes checked against the real read-only fixtures**
+  (`~/forge/test-planner/fixtures`): 7 `.feature` files, **0** step
+  registrations (`ctx.Step(`/`s.Step(`/`InitializeScenario`/
+  `godog.TestSuite`), **0** `*_test.go`. So on that corpus B2 = `ok`,
+  B1 and B3 = `unavailable` — which is precisely the case the reference
+  documents as "scenarios exist, no step layer readable ⇒ no scenario can
+  be counted as evidence". Item 2's log predicted this corpus limitation
+  on paper; it is now measured.
+- **The envelope grammar and the B2×B3 merge rule were executed, not just
+  described.** Wrote a parser to the documented grammar plus the caller's
+  merge rule, generated the B2 envelope *mechanically from the real
+  fixture feature file* (16 step findings, Background steps attributed per
+  scenario), and ran two cases. Case 1 (real corpus, B3 `unavailable`):
+  all 3 scenarios → not-evidence, reason "no step layer readable". Case 2
+  (synthetic B3): `wired` for the two scenarios whose every step matches a
+  substantive binding, and not-evidence for each of the four defect
+  branches with the right reason — `@wip`, unmatched step, registration
+  unreachable (`registered in (unreached)`), and pending binding
+  (`touches: nothing`). Five branches, five distinct correct reasons.
+- **The skeptic rules were executed too**: 5 skeptic blocks parsed against
+  the documented shape, and the symmetric-evidence-bar logic gives
+  refuted → downgrade only when the citation is re-findable; refuted with
+  `evidence: none` → `survived-caveat`; refuted with a citation the caller
+  cannot re-find → `survived-caveat`; survived-caveat → covered/medium;
+  survived → covered. 5/5 as documented.
+- Harness lives in `/tmp/fanout-check/` (throwaway — not committed; it
+  tests a documented contract, and its permanent home is the rung-1
+  scorecard tooling, not this repo).
+
+Deliberately **not** run: the lanes themselves, as live agents, from this
+session. PROVING-GROUND rule 1 forbids the session that built a thing from
+being the session that grades it, and a fan-out I dispatched here with the
+answers already in context would measure nothing. The lanes get their real
+first exercise in the item 4 smoke eval and their graded one at rung 1,
+both clean-room.
+
+**Learned / for the next iterations.**
+
+- Item 1 as specified had a hidden ordering dependency: A2's input (spec
+  URLs) comes from A1's output, so "all lanes in one message" is false for
+  the planner. Resolved explicitly — A1+A3 together, A2 joins them if a
+  URL is already in hand, else it goes the instant A1 returns. Worth
+  watching for the same shape at rung 4, where cross-service evidence may
+  want a second B-wave seeded by the first.
+- Flat `findings` lines lose structure when what the caller needs is a
+  *mapping* (scenario → its steps). B2/B3 therefore got fixed
+  finding-line shapes with the owner and the verbatim string in known
+  positions. Discovered by writing the parser: my first B2 envelope parsed
+  into an unusable flat list. Any future lane whose output is merged
+  mechanically needs its line shape pinned the same way.
+- The three reviewer lanes give rung-1 debugging a free tool: if verdicts
+  flip between the 3 required runs, diff the lane envelopes — identical
+  envelopes ⇒ caller/rubric problem, differing envelopes ⇒ lane-scope
+  problem. Envelopes should be kept as run artifacts in the scorecard
+  (noted in the reference; item 5 should implement it).
+
+**For planning sync:** the fan-out makes the reviewer's most gameable
+judgment — wired-means-wired — *structurally* independent: the agent that
+inventories step registrations never sees the scenarios it might be
+tempted to match them to, and the agent that attacks a `covered` verdict
+never sees the verdict list it might calibrate to. Together with item 2's
+structural confidence, that is the concrete D1 answer to "what would make
+an agent verdict auditable enough to gate on": not a better prompt, but an
+architecture where the load-bearing judgments are made by parties that
+cannot see each other's expectations, and every claim in either direction
+carries a citation the caller re-found.
