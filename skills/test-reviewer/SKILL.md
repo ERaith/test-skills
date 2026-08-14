@@ -187,6 +187,23 @@ keeping it. Downgrading on an uncitable objection would make the report
 pessimistic in exactly the unfalsifiable way the rubric refuses to be
 optimistic.
 
+**And a refutation has to be in scope.** Citable is not sufficient: the
+attack must land on *the outcome this AC states*. The strongest-looking
+skeptic findings are mutation arguments about properties the AC never
+claimed — "the fixture creates only one record, so a `GetReservation` that
+ignored the id and returned the only row would pass this scenario
+identically". That is true, it is citable, and it is **not** a refutation of
+an AC that says an existing reservation can be read back in full: it names a
+*derived* coverage item, and derived items are gaps, never verdicts
+([test-design-techniques.md](${CLAUDE_PLUGIN_ROOT}/skills/test-planner/references/test-design-techniques.md)).
+Route it to Gaps, where it is genuinely useful, and leave the verdict alone.
+The exception is the same one that rule already carries: if the AC itself
+names the property (it says *by id*, it names the 409), the property is part
+of its stated outcome and the attack does land. The channel matters more
+than it looks — the skeptic pass is the one place where a derived objection
+arrives already dressed as a verdict-moving finding, and a reviewer that
+lets it through downgrades on a standard the plan never set.
+
 ## Step 3c — Assign confidence
 
 Give **every** verdict — AC and planned test alike — a `high` / `medium` /
