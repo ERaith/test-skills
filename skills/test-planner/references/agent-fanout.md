@@ -4,8 +4,8 @@ Shared by both skills. The planner fans out to gather context; the reviewer
 fans out to inventory evidence and then to attack its own `covered`
 verdicts. This file is the contract: the lanes, the prompt templates, the
 return envelope, and the merge rules. Change it by MR — a fan-out that
-drifts per run is unmeasurable, and these skills are graded on stability
-across independent runs (see PROVING-GROUND.md).
+drifts per run is unmeasurable, and these skills are judged on whether two
+independent runs over the same repo reach the same verdicts.
 
 ## The one law: agents gather, the caller decides
 
@@ -143,8 +143,8 @@ mechanism changes, the confidence consequences do not. It is a weaker
 instrument (the session attacking the verdict is the session that formed
 it), which is why the limitation is stated rather than priced in: whether
 independent skepticism actually flips verdicts that inline skepticism keeps
-is a measurable question, and PROVING-GROUND rung 1 is where it gets
-measured, not guessed.
+is a measurable question, to be answered by measurement rather than guessed
+at here.
 
 ---
 
@@ -384,15 +384,15 @@ Applying the outcomes, in the caller:
   them buys nothing and would pull verdicts green, which is the wrong
   direction for a bar that exists to resist gaming.
 
-## Notes for evals
+## Notes on stability
 
 Fan-out is a stability risk as much as a quality gain: it adds N sampled
-sessions to a run that must reproduce across three independent runs
-(PROVING-GROUND.md). The controls are all in this file — fixed lane
+sessions to a run whose conclusions are supposed to reproduce. The controls
+are all in this file — fixed lane
 definitions, verbatim prompt templates, facts-not-judgment returns, the
-caller re-grepping everything. If a rung shows verdicts flipping between
+caller re-grepping everything. If repeated runs show verdicts flipping between
 runs, diff the lane envelopes first: a flip whose lane envelopes are
 identical is a caller/rubric problem, and a flip whose envelopes differ is
 a lane-scope problem. Keeping the envelopes as run artifacts is what makes
-that diff possible — write them to the scorecard, not to the repo under
-review.
+that diff possible — write them alongside the report, not into the repo
+under review.

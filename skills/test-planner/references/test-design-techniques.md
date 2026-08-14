@@ -149,8 +149,7 @@ R3 are indistinguishable to the client.
 
 The table's other job is **finding gaps and contradictions in the
 requirements** [§4.2.3]: a column two ACs answer differently is a
-contradiction to raise under **AC issues**, not a case to plan around. (Rung 5
-of the proving ground is built out of exactly this.)
+contradiction to raise under **AC issues**, not a case to plan around.
 
 ## 5. State-transition testing (ISTQB §4.2.4)
 
