@@ -90,18 +90,53 @@ If R1 passes and research is done, idle — do not invent new scope.
 
 ### Rungs — one at a time, human checkpoint between each
 
-- [ ] R1. **Single HTTP service.** Build the scenario + mixed-quality
+- [~] R1. **Single HTTP service** — built + evaluated (heavy model); PROVISIONAL pass. Re-run on Sonnet to certify. Original scope: Build the scenario + mixed-quality
       tickets (one crisp, one vague/untestable AC, one missing failure
       paths) + ground truth OUTSIDE the eval repo. Planner drafts plans;
       reviewer verdicts the seeded branches (full / AC-missing / gamed-test
       / unwired). Scorecard BOTH. Merge to main. STOP for the R2 decision.
-- [ ] R2+. **Decided jointly after R1's results** — not pre-committed. The
+- [ ] R2. **+ Spanner emulator** (DECIDED 2026-08-14) — persistence-as-contract: back-door row assertions, update-vs-insert cardinality, first testcontainer. Builds AFTER the Sonnet re-run confirms R1.
+- [ ] R3+. Decided jointly after each rung — not pre-committed. The
       complexity menu to pick the next increment from: +Spanner emulator,
       +Kafka produce/consume, +3 microservices, the mess batch
       (contradictory ACs, ticket-vs-MR scope mismatch). Choose the next
       increment from what R1 reveals is weak, not from a fixed sequence.
 
 ## Log
+
+### 2026-08-14 — R1 (single-service) built + evaluated; provisional pass
+
+Built rung1 (reservations-api): spec + 3 mixed-quality tickets (RES-102: 2
+crisp ACs, 2 untestable [AC2 "gracefully", AC4 "responsive"], 1 implied
+[double-click idempotency]) + 4 seeded-defect branches + perturbations +
+ground truth OUTSIDE the eval repo. Both skills, 5 clean-room runs/arm.
+
+Results (ON THE HEAVY BUILD MODEL — caveat 1):
+- Planner (RES-102): flagged both untestable ACs with SOURCED rewrites and a
+  spec-open-question refusal; added 3 implied failure-path tests; all ACs
+  covered; stored-status back-door discipline; clean format. Pass.
+- Reviewer: per-AC verdicts matched EXPECTED on all 4 arms; correct overall
+  SUFFICIENT/INSUFFICIENT; caught the gamed branch's assertion-free test
+  (Unknown Test smell) with line-level evidence; 6 skeptics survived. One
+  soft miss (T7 partial->covered, full arm). Calibrated over 6h — 6 reviewer
+  commits (citation pre-flight, greppable citations, skeptic-in-scope).
+
+CAVEATS (gate a real pass):
+1. Ran on the heavy build model, NOT the Sonnet runtime tier. run-cleanroom.sh
+   now pinned to `--model sonnet`; R1 must be RE-RUN on Sonnet to certify.
+2. Ground truth builder-authored; walked through with the human this session
+   (RES-102 plan + gamed-branch verdict) -> proceeding to R2 = provisional
+   acceptance. Explicit AC-by-AC sign-off not separately recorded.
+3. Run hit the subscription session limit and spun ~600 useless iterations;
+   forge.sh now HALTS on session limit (fixed this session).
+
+DECISIONS:
+- R1 = PROVISIONAL pass, pending the Sonnet re-run.
+- R2 = + Spanner emulator (persistence-as-contract; back-door row assertions,
+  update-vs-insert cardinality). Builds AFTER the Sonnet re-run confirms R1.
+
+NEXT: Sonnet re-run of R1 (quota resets 15:20 UTC) -> human review -> R2.
+
 
 *(one dated entry per iteration: what was done, what was learned, what
 changed in the queue)*
