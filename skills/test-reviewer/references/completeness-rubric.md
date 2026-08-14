@@ -57,6 +57,21 @@ not). Judgment calls are allowed and must be explained in the report.
      defect is the hybrid: your own summary wearing the plan's quotation
      marks. It is not a lie and the verdict is usually right, which is
      exactly why it survives review.
+   - **A quote must be findable the way a reader will look for it: on one
+     line, with its interior untouched.** Verbatim is necessary and not
+     sufficient, because `grep -F` is line-oriented and prose files are hard
+     wrapped. A sentence you copied character-for-character across a line
+     wrap in `plans/<KEY>.md` is a *correct* quote that no `grep -F` will
+     ever return, and a reader who checks it reaches exactly the conclusion
+     the rule exists to prevent. Same outcome, different cause, when the
+     sentence you want contains its own double quotes (`code
+     "invalid_date"`): they cannot nest inside a quoted table cell, so they
+     get silently re-marked-up as backticks — a byte change, and the string
+     stops matching. Both are avoided the same way: **quote the longest
+     fragment of the sentence that lives on one line and contains no
+     quotation marks of its own.** A shorter greppable quote carries the
+     claim; a longer un-greppable one carries nothing. When no such fragment
+     says what you need, cite `file:line` and paraphrase unquoted.
    - **Enforce it mechanically, at the end, on your own draft.** This rule is
      not reliably obeyed by intending to obey it: the quotes that break it are
      the ones you were most sure of, so they never prompt a check. Before the

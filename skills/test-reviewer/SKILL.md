@@ -266,6 +266,15 @@ both catch the class of error that intending-to-be-careful does not:
    that reaches the report is usually a tidied version of the one you looked
    up. Sentences describing what the *plan* required are the most frequent
    offenders — quote the plan exactly or cite its line and drop the quotes.
+   **A miss does not always mean the words are absent.** Before retyping,
+   check whether the sentence is merely *wrapped*: grep a distinctive
+   fragment of it, and if that fragment is there, the string is real and your
+   quote spans a line break. Do not widen the quote to fix it — narrow it to
+   the longest fragment on a single line that carries no quotation marks of
+   its own (the source's own `"..."` cannot nest in a table cell and will
+   otherwise come out re-marked-up as backticks, which is the same defect).
+   A quote that survives `grep -F` as typed is worth more than a longer one
+   that does not.
 2. **Every AC and every planned test in the plan has a row**, and both tables
    carry the four columns above. A verdict you could not decide is a row
    saying so, never an absent row.
