@@ -59,18 +59,18 @@ never both skip it and stay quiet.
 **Number the ACs — once, here, from A1's verbatim AC block** (or the pasted
 text): `AC1..ACn` in document order. No lane numbers ACs and no lane invents
 one; A2's constraints and A3's vocabulary never become ACs. A spec
-constraint the ticket omits becomes a `Verifies: implied` test in Step 4 and
-a line under **AC issues** — not an AC the planner minted for itself. If the
-ticket has no explicit AC section, extract testable statements from the
+constraint the ticket omits becomes an `IMPL.<m>` required assertion in Step 4
+and a line under **AC issues** — not an AC the planner minted for itself. If
+the ticket has no explicit AC section, extract testable statements from the
 description and present them as "derived ACs — confirm before relying on
 this plan."
 
 Two things A3 buys: **layer assignment** grounded in what the repo actually
-has (unit vs godog integration vs contract), and **step-vocabulary reuse** —
-draft Gherkin must use the step patterns A3 returned wherever they fit, not
-invent near-duplicates (see
-[references/gobdd-standards.md](references/gobdd-standards.md)). If A3 came
-back `unavailable` (no checkout reachable), the layer assignments are
+has (unit vs gobdd acceptance vs contract), and the **`@step` catalog** — the
+outline names observables the cataloged steps can assert, and flags
+"(may need a new gobdd step)" when a required assertion has no cataloged step
+(see [references/gobdd-standards.md](references/gobdd-standards.md)). If A3
+came back `unavailable` (no checkout reachable), the layer assignments are
 ungrounded guesses — say that in the summary rather than presenting them as
 fitted to the repo.
 
@@ -102,63 +102,57 @@ get this wrong and both showed up in practice:
 Asserting current behaviour is only correct once someone has decided that is
 the behaviour. Until then, name it and leave it uncovered on the record.
 
-## Step 4 — Write the plan
+## Step 4 — Write the coverage outline
 
-One section per planned test, following plan-format.md exactly:
+The plan is a **generalized outline of what must be asserted**, per AC —
+**not Gherkin, not feature files.** The dev writes the gobdd scenarios against
+the `@step` catalog; you specify what those tests must prove, and the reviewer
+checks each required assertion against the MR. Follow plan-format.md exactly:
+one block per AC, each with a layer and a list of required assertions
+(`AC<n>.<m>`) that name the **observable to check** (status, error code,
+stored row, published event, field value).
 
-- Every test declares `Type` (`happy` / `negative` / `edge` / `failure`),
-  `Layer` (`unit` / `integration` / `contract` / `smoke`), and `Verifies`
-  (the AC ids it covers).
-- **Every AC must be verified by at least one test.** Check this before
-  emitting; it is the invariant the reviewer enforces later.
-- Integration-layer tests get draft Gherkin in gobdd style (gobdd-standards
-  has the authoring rules — declarative, behavior-per-scenario, reuse steps).
-  Unit-layer tests get a one-line description of the case, not Gherkin.
-- **Derive the edge cases per AC — don't wait for inspiration.** Run the
-  seven-step pipeline in
+- **Every testable AC has ≥1 required assertion.** An untestable AC goes in
+  **AC issues** with no assertions — flagged for a human, never planned around
+  with vague checks. Check this before emitting; it is the invariant the
+  reviewer enforces later.
+- **Derive the required assertions per AC — don't wait for inspiration.** Run
+  the seven-step pipeline in
   [references/test-design-techniques.md](references/test-design-techniques.md)
   over each AC in order: variables/outcome → equivalence partitions
   (including the invalid ones) → boundaries on ordered partitions →
   decision table where ≥2 conditions decide the outcome → state transitions
-  (all-transitions is the default for an HTTP state machine) → the pruned
-  heuristic sweep → protocol failure paths. Same pipeline, same order, every
-  time: the reviewer re-runs it backwards to find gaps, and the two lists are
-  only comparable if the derivation is fixed rather than improvised.
-- **Add the failure paths the ACs forgot.** For every endpoint the ticket
-  touches, walk the failure-path checklist in
+  (all-transitions is the default for a state machine) → the pruned heuristic
+  sweep → protocol failure paths. Same pipeline, same order, every time: the
+  reviewer re-runs it backwards to find gaps, and the two lists are only
+  comparable if the derivation is fixed rather than improvised. Each surviving
+  case becomes a required assertion (the observable to check), not a scenario.
+- **Add the failure paths the ACs forgot** as `IMPL.<m>` assertions. For every
+  endpoint/consumer the ticket touches, walk the failure-path checklist in
   [references/completeness-rubric.md](../test-reviewer/references/completeness-rubric.md)
   (auth, validation, not-found, conflict, dependency failure, duplicate
-  delivery where events are involved) — with the RFC 9110 obligations from
-  test-design-techniques.md §7 for what each response must actually assert —
-  and add `Type: failure` tests for the applicable ones, marked
-  `Verifies: implied` when no AC states them. ACs describe the happy path;
-  production incidents live in what they didn't say.
-- **Collapse before emitting.** Derived cases are coverage items, not plan
-  entries: a validation matrix is one unit table test with its cases listed,
-  and the integration layer gets one representative per partition / boundary
-  / status code. Anything derived and then dropped is dropped *on the record*
-  (a line under **AC issues** or in the summary) — silent pruning is what
-  makes a plan uncheckable later.
-- Layer assignment rule of thumb for our stack: pure logic and mapping →
-  unit (Go table tests); anything crossing a process boundary the repo
-  tests with containers — HTTP round-trip, a Kafka message produced or
-  consumed, a Spanner row written — → integration/godog (suites run via
-  `go test` + `godog.TestSuite{TestingT}`, infra from testcontainers);
-  changes to a `contract/` file or shared event type → contract;
-  deployment-only concerns → smoke, and say so rather than planning them
-  here.
-- **Dual-write ACs get dual assertions.** When an action persists to
-  Spanner AND publishes to Kafka, the plan must demand both outcomes
-  asserted — the row (named back-door step per gobdd-standards) and the
-  consumed event — ideally in one scenario, so partial writes can't pass.
-- **A state change is proven by the state, not by the response that claims
-  it.** Whenever an AC's outcome is "…and the <thing>'s status becomes X" —
-  a transition, a soft delete, a counter increment, anything the next
-  request would see — the success case owes an assertion on the state
-  *after* the call: re-read it (a GET, a list, a back-door row read) and
-  assert X. The response body echoing X is the handler agreeing with
-  itself; a handler that returns 200 with the new status and never commits
-  passes every response-only test you can write.
+  delivery, poison message) — with the RFC 9110 obligations from
+  test-design-techniques.md §7 for what each response must assert. ACs
+  describe the happy path; production incidents live in what they didn't say.
+- **Collapse before emitting.** A validation matrix is ONE required assertion
+  naming the partitions to cover (one representative per partition / boundary
+  / status code), not one per value. Anything derived and then dropped is
+  dropped *on the record* (a line under **AC issues** or the summary) — silent
+  pruning makes a plan uncheckable later.
+- Layer per AC: pure logic/mapping → `unit`; anything crossing a boundary
+  (HTTP, a Kafka message produced/consumed, a DB/Spanner row) → `acceptance`
+  (the gobdd suite); a shared schema/event change → `contract`.
+- **Dual-write ACs get both halves as required assertions.** When an action
+  persists (SQL/Spanner) AND publishes to Kafka, demand `[state]` (the row)
+  AND `[dual-write]` (the event) — plus the failure half (write fails → no
+  event). A test asserting one half is `partial`, and the reviewer will say so.
+- **A state change is proven by the state, not the response that claims it.**
+  Whenever an AC's outcome is "…and the <thing>'s status becomes X", add a
+  `[state]` assertion on the state *after* the call (a re-read / back-door row
+  read), separate from the response assertion. A handler that returns 200 with
+  the new status and never commits passes every response-only test.
+- **Name the PIBs** when the ticket spans regions — the reviewer checks the AC
+  is covered for each targeted PIB, not just `row`.
 
   Watch for the asymmetry, because it is the common shape and it looks
   thorough: plans routinely re-read on the **rejection** cases (to show the

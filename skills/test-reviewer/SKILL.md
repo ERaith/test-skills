@@ -96,7 +96,7 @@ never ran.
 
 ## Step 3 — Classify
 
-For **each AC** and **each planned test**, assign `covered` / `partial` /
+For **each AC** and **each required assertion**, assign `covered` / `partial` /
 `missing` per the rubric. The mechanical rules:
 
 - **Evidence must be cited and must exist.** Every non-`missing` verdict
@@ -111,10 +111,10 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
   fail that grep. Command output, skeptic wording and your own summary are
   evidence too, but they are not citations: give them prose or backticks,
   never quotes.
-- **Layer must match the plan.** A planned `integration` test satisfied
+- **Layer must match the plan.** A planned `acceptance` test satisfied
   only by a unit test with mocked boundaries is `partial` — the assertion
   exists, but the behavior wasn't proven across the boundary the plan
-  demanded. The reverse (integration evidence for a planned unit case) is
+  demanded. The reverse (acceptance evidence for a planned unit case) is
   acceptable; note it.
 - **Assertion substance over test names** (rubric smells): a test named
   for the AC that never asserts the AC's outcome — calls the endpoint,
@@ -124,7 +124,7 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
   `partial`; say which half is missing.
 - **Failure paths:** walk the rubric's checklists (HTTP, Kafka consumer,
   Spanner persistence) against every endpoint/consumer the diff touches,
-  including the plan's `Verifies: implied` tests. Uncovered applicable
+  including the plan's `IMPL.<m>` assertions. Uncovered applicable
   failure paths are gaps even when every AC is green. What each response
   must assert — including the two RFC 9110 `MUST`s (`WWW-Authenticate` on
   401, `Allow` on 405) — is in
@@ -213,7 +213,7 @@ lets it through downgrades on a standard the plan never set.
 
 ## Step 3c — Assign confidence
 
-Give **every** verdict — AC and planned test alike — a `high` / `medium` /
+Give **every** verdict — AC and required assertion alike — a `high` / `medium` /
 `low` confidence, derived by the rubric's confidence table and caps from two
 recorded facts: executed-vs-static-only (Step 2) and the Step 3b outcome.
 Do not eyeball it, and do not let a clean-looking diff raise it.
@@ -250,20 +250,22 @@ container runtime)
   integration ./features/...` with a container runtime) — the evidence is
   read-only so far.
 
-## Planned-test verdicts
+## Required-assertion verdicts
 
-| Test | Verdict | Confidence | Evidence |
-|------|---------|------------|----------|
-| T1 | covered | high | ... |
+| Assertion | Verdict | Confidence | Evidence |
+|-----------|---------|------------|----------|
+| AC1.1 | covered | high | ... |
 
-Same four columns, same header, same "what would raise it" treatment — do not
-add a `Verifies` column or re-order them; the plan already says what each test
-verifies, and a stable shape is what makes a run diffable against the last one.
+One row per required assertion in the plan (`AC<n>.<m>` and `IMPL.<m>`). Same
+four columns, same header, same "what would raise it" treatment — do not add
+columns or re-order them; the plan already says what each assertion requires,
+and a stable shape is what makes a run diffable against the last one.
 
-## Gaps and recommended tests
-<per gap: what's missing, plus a ready-to-add skeleton — Gherkin reusing
-the repo's existing step vocabulary for integration gaps, a Go table-test
-case for unit gaps>
+## Gaps and recommended assertions
+<per gap: which required assertion is uncovered and what observable is missing
+— name the cataloged `@step` phrase that would assert it (or "needs a new
+gobdd step"), or the Go table-test case for a unit gap. Do NOT write full
+Gherkin scenarios — the dev authors those; say what must be asserted.>
 
 ## Notes
 <layer mismatches, unwired scenarios, name/assertion mismatches, dual-write
@@ -312,7 +314,7 @@ both catch the class of error that intending-to-be-careful does not:
    the moment one string is not there, and writing it forces the extraction
    that the check consists of. A tally you cannot honestly write is a report
    that is not finished.
-2. **Every AC and every planned test in the plan has a row**, and both tables
+2. **Every AC and every required assertion in the plan has a row**, and both tables
    carry the four columns above. A verdict you could not decide is a row
    saying so, never an absent row.
 
