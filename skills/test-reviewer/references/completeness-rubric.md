@@ -86,9 +86,14 @@ not). Judgment calls are allowed and must be explained in the report.
      objection in quotes, a plan sentence re-marked-up. The instruction was
      already there; what was missing was an output that goes wrong when the
      check is skipped.
-3. **Wired means wired.** A godog scenario counts only if every step has a
-   matching registration reachable from the suite's `InitializeScenario`.
-   Pending/undefined/`@wip` = no coverage.
+3. **Wired means wired (catalog-aware).** A gobdd scenario counts only if
+   every step phrase resolves to a step available to the suite — either a
+   **built-in pack step** (`api`/`kafka`/`database`/`spanner`/…, catalogued
+   via `@step:` annotations in the gobdd import — wired by import, not by a
+   local registration) or a **custompack** `sc.Step(regex, st.method)` in the
+   repo. A phrase matching no cataloged step, a custompack method never
+   registered, or a binding that returns `godog.ErrPending`/asserts nothing =
+   no coverage. `@wip` = no coverage. See gobdd-standards.md.
 4. **Passing means passing.** If the suite was runnable and the test
    failed, it is not evidence. If the suite was not runnable (no container
    runtime, no creds), the report says so — static evidence stands but is

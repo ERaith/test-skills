@@ -51,22 +51,29 @@ plan are your anchor and you read them yourself.
 - **B2 — feature files:** `features/**/*.feature` — every scenario, its
   tags (`@integration`, `@smoke`, `@wip` — anything `@wip` is not
   evidence), and every step **verbatim**.
-- **B3 — step wiring:** every step registration (`ctx.Step(`,
-  `InitializeScenario`) verbatim with the function it binds to, whether
-  anything reaches that registration, and what each bound function actually
-  touches — HTTP recorder, direct Spanner client, Kafka consumer, a fake,
-  or nothing.
+- **B3 — step catalog + wiring:** the set of step phrases available to this
+  suite, from two sources (see gobdd-standards.md). (1) **gobdd's built-in
+  packs** (`api`, `kafka`, `database`, `spanner`, …): their steps live in the
+  gobdd import, catalogued via `@step:` annotations — return each cataloged
+  phrase with its phase and what it touches (HTTP, Kafka topic, DB/mssql row).
+  (2) **The project custompack(s):** `sc.Step(regex, st.method)` registrations
+  in the repo, verbatim with the method they bind and what it touches. A step
+  served by a built-in pack is **wired by import** even though it is not
+  defined in the service repo — do not report it as unwired.
 
 **B3 is blind to B2 on purpose, and you do the matching.** An agent that
 reads a scenario and then hunts for its steps will accept a near-match,
 because it knows what it wants to find; B3 is never told which scenarios
-exist. Match every step string B2 returned against B3's pattern list
-yourself. A scenario with one unmatched step, one `godog.ErrPending`
-binding, or a registration nothing reaches is NOT evidence — it's a wish.
-For Spanner/Kafka assertions, B3's "what it touches" line is the check: a
-row-assertion step must reach the direct Spanner client, an event-assertion
-step must consume the topic; one that goes back through the API's own read
-path proves less than it appears to.
+exist. Match every step string B2 returned against B3's catalog+registration
+list yourself. A scenario step that resolves to **no** cataloged phrase (nor
+a custompack `sc.Step`), or a custompack method that is registered but
+returns `godog.ErrPending`/asserts nothing, is NOT evidence — it's a wish.
+For Spanner/Kafka/DB assertions, B3's "what it touches" line is the check: a
+row-assertion step must reach the DB/Spanner client, an event-assertion step
+must consume the topic; one that goes back through the API's own read path
+proves less than it appears to. **Dual-write:** a scenario asserting the
+Kafka response but not the DB row (or the row but not the message) covers
+only half — `partial`, name the missing half.
 
 Then, in this session (never in a lane — execution is side-effecting and
 its result is yours to witness): if the suite runs cheaply, run it.

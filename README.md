@@ -53,10 +53,12 @@ files — change them by MR, and both skills pick the change up:
   per-verdict skeptic agents, plus the return envelope, the merge rules
   (agents gather, the caller decides; every agent citation re-grepped) and
   the no-subagent fallback.
-- `skills/test-planner/references/godog-standards.md` — godog runner/layout
-  (go test + `godog.TestSuite{TestingT}`; the CLI is deprecated), scenario
-  quality rules, legacy tag-expression syntax, and the documented house
-  deviation on Then-steps asserting Spanner rows/Kafka events.
+- `skills/test-planner/references/gobdd-standards.md` — the team's internal
+  `gobdd` framework (a godog wrapper): the `gobdd.Run` runner, step **packs**
+  with `@step:` annotation catalogs, built-in `api`/`kafka`/`database`/…
+  packs (steps wired by import), the fixed `features/` layout and per-PIB job
+  configs, legacy tag syntax, and the request-response Kafka + dual-write
+  (message + SQL row) shapes.
 - `skills/test-reviewer/references/completeness-rubric.md` — verdict
   definitions, the evidence bar (cite-or-missing, wired-means-wired), the
   confidence derivation (structural: skeptic-survived + executed = `high`;

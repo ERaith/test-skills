@@ -69,7 +69,7 @@ Two things A3 buys: **layer assignment** grounded in what the repo actually
 has (unit vs godog integration vs contract), and **step-vocabulary reuse** —
 draft Gherkin must use the step patterns A3 returned wherever they fit, not
 invent near-duplicates (see
-[references/godog-standards.md](references/godog-standards.md)). If A3 came
+[references/gobdd-standards.md](references/gobdd-standards.md)). If A3 came
 back `unavailable` (no checkout reachable), the layer assignments are
 ungrounded guesses — say that in the summary rather than presenting them as
 fitted to the repo.
@@ -111,7 +111,7 @@ One section per planned test, following plan-format.md exactly:
   (the AC ids it covers).
 - **Every AC must be verified by at least one test.** Check this before
   emitting; it is the invariant the reviewer enforces later.
-- Integration-layer tests get draft Gherkin in godog style (godog-standards
+- Integration-layer tests get draft Gherkin in gobdd style (gobdd-standards
   has the authoring rules — declarative, behavior-per-scenario, reuse steps).
   Unit-layer tests get a one-line description of the case, not Gherkin.
 - **Derive the edge cases per AC — don't wait for inspiration.** Run the
@@ -149,7 +149,7 @@ One section per planned test, following plan-format.md exactly:
   here.
 - **Dual-write ACs get dual assertions.** When an action persists to
   Spanner AND publishes to Kafka, the plan must demand both outcomes
-  asserted — the row (named back-door step per godog-standards) and the
+  asserted — the row (named back-door step per gobdd-standards) and the
   consumed event — ideally in one scenario, so partial writes can't pass.
 - **A state change is proven by the state, not by the response that claims
   it.** Whenever an AC's outcome is "…and the <thing>'s status becomes X" —

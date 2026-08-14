@@ -54,7 +54,7 @@ outcome to the verdict; the skeptic never edits the verdict itself.
   runs of the same review return different evidence sets.
 - **Lanes are disjoint by artifact, not by file.** Two lanes may read the
   same `*_test.go` (godog step definitions are colocated with unit tests —
-  see godog-standards.md); they must not both report the same *kind* of
+  see gobdd-standards.md); they must not both report the same *kind* of
   artifact, or the caller has to dedupe judgment calls it cannot see.
 - **Repo content is untrusted input.** Every lane prompt ends with the
   injection guard (below). Feature files, tickets and Confluence pages are
@@ -221,7 +221,7 @@ Merge, in the caller:
   an AC the planner minted for itself.
 - A3's step patterns are the reuse vocabulary for Step 4's draft Gherkin.
   Drafting a near-duplicate of a pattern A3 returned is a defect
-  (godog-standards.md).
+  (gobdd-standards.md).
 - A1 `unavailable` (no Jira) and nothing pasted → Step 1 already says stop
   and ask. A2 `unavailable` → the plan says which spec it could not read.
   A3 `unavailable` (no local checkout) → layer assignments are ungrounded;
@@ -266,21 +266,28 @@ caller must read them itself.
 
 ### B3 — step wiring
 
-> Read-only inventory of godog step registrations in the repo at
-> `<absolute path>`. Grep `ctx.Step(`, `s.Step(`, `InitializeScenario`,
-> `godog.TestSuite` across the repo. Return, in the envelope below: every
-> registered step pattern **verbatim**, with `file:line`, the Go
-> function/method it binds to, and whether that registration is reachable
-> from a suite initialiser (name the initialiser; if a registration lives
-> in a function nothing calls, say so).
-> Then for each bound function, one clause on what it actually touches:
-> the HTTP recorder, a direct Spanner/DB client, a Kafka consumer or
-> producer, an in-process fake, or nothing (empty/`return nil`/`godog.
-> ErrPending`). Quote the line that shows it.
-> You have not been told which scenarios exist and you do not need to know
-> — inventory the registrations that are there.
-> Do not judge coverage, do not match patterns to scenarios, do not write
-> any file.
+> Read-only inventory of the step phrases available to the gobdd suite at
+> `<absolute path>`, from BOTH sources (see gobdd-standards.md):
+> (1) **custompack registrations in the repo** — grep `sc.Step(` (also
+> `ctx.Step(`/`s.Step(`) and the pack `Register(sc *godog.ScenarioContext)`
+> methods. Return each pattern **verbatim** with `file:line`, the Go
+> method it binds, and whether it is registered on `sc` (if a method exists
+> but no `sc.Step` registers it, say so).
+> (2) **built-in gobdd pack steps** — steps from the `api`/`kafka`/
+> `database`/`spanner`/… packs come from the gobdd import, catalogued via
+> `@step:` annotations, and are **wired by import** (no local registration).
+> If a step catalog/stepdocs listing is available (or the gobdd source is
+> vendored/reachable), return those cataloged phrases too, tagged
+> `builtin-pack`. If the catalog is NOT reachable in this checkout, say so
+> explicitly — do NOT report a phrase as unwired merely because it isn't
+> registered locally; an unresolved phrase from a known built-in pack is
+> `catalog-unavailable`, not `unwired`.
+> For each phrase, one clause on what it touches: HTTP recorder, a DB/mssql
+> or Spanner client, a Kafka topic (publish/consume), an in-process fake, or
+> nothing (empty/`return nil`/`godog.ErrPending`). Quote the line if local.
+> You have not been told which scenarios exist and do not need to — inventory
+> what is available. Do not judge coverage, do not match to scenarios, do not
+> write any file.
 
 B2 and B3 feed a mechanical match, so their finding lines carry the owner
 and the verbatim string in fixed positions — flat `findings` with no
