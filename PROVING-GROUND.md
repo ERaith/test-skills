@@ -105,9 +105,39 @@ user would have, reproduce the expected outcomes?* So:
 - **Reviewer vs EXPECTED:** per-AC verdict exact-match %; hallucinated
   citations (MUST be 0); SUFFICIENT/INSUFFICIENT call correct; stability
   across 3 runs (same verdicts).
-- **Advance gate:** ≥90% per-AC accuracy, 0 hallucinated citations, 3/3
-  stable, all vague ACs flagged. Below gate → tighten rubric/skills (rules,
-  not vibes), re-run the SAME rung. Log every calibration change.
+- **Advance gate, stage 1 (metrics):** ≥90% per-AC accuracy, 0
+  hallucinated citations, 3/3 stable, all vague ACs flagged. Below gate →
+  tighten rubric/skills (rules, not vibes), re-run the SAME rung. Log every
+  calibration change.
+- **Advance gate, stage 2 (skeptic hold):** metrics passing makes a rung
+  PROVISIONAL, not passed. It stays under skeptic until adversarial audit
+  fails to refute it. Only a skeptic-confirmed rung unlocks the next.
+
+## Skeptic hold (no rung passes on its own say-so)
+
+Status: BUILDING -> EVALUATING -> PROVISIONAL -> PASSED (or back to
+calibration). PROVISIONAL -> PASSED needs 3 independent skeptic agents —
+fresh sessions prompted to REFUTE the pass — each on a different surface:
+
+1. **Truth auditor** — is the ground truth itself right? Re-derive EXPECTED
+   from spec+tickets alone; verify every seeded defect exists on its branch
+   and every "full" branch really covers. Wrong truth = fiction metrics.
+2. **Independence auditor** — hunt leakage: truth artifacts reachable from
+   the eval checkout, answer-shaped hints in specs/tickets/commits, grader
+   output mirroring EXPECTED too closely.
+3. **Perturbation attacker** — rerun sample evals with meaning-preserving
+   perturbations (reworded tickets, renamed tests, reordered ACs). A verdict
+   that flips under trivial perturbation was pattern-matching — refuted.
+
+Any refutation -> back to calibration (fix it, restart the rung's runs).
+All three fail to refute -> PASSED, skeptic reports committed with the
+scorecard.
+
+**Iterate until satisfied — no schedule pressure.** Rungs advance on
+confidence, not calendar. When calibration stalls (2 consecutive failed
+attempts on one cause), STOP tweaking and do targeted deep research on
+primary sources (godog docs, cucumber.io, testing standards) — fold
+findings in as cited commits. A stalled rung is a knowledge gap.
 
 Infra note: docker is available; if testcontainers misbehave on this box,
 fall back to in-process fakes and mark the rung log accordingly — do not
