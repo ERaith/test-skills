@@ -59,7 +59,11 @@ author is senior, the diff is small, or the report feels harsh.
   (`go test ./...`, or the `@integration` godog suite against a live
   container runtime). Evidence read but not run is **static-only**.
 - **skeptic-survived** — the `covered` verdict went through an explicit
-  refutation attempt (SKILL.md Step 3b) that failed to break it.
+  refutation attempt (SKILL.md Step 3b — an independent skeptic agent per
+  verdict where a subagent runtime exists, the same attacks inline where it
+  does not) that failed to break it. A refutation carries the same citation
+  bar as coverage: an objection that cannot be re-found does not refute, it
+  caveats.
 
 | Verdict | `high` | `medium` | `low` |
 |---|---|---|---|

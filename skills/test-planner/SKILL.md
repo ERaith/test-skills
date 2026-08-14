@@ -13,40 +13,66 @@ makes the whole workflow work. The output format is canonical and shared with
 the team's `test-planner` CLI — read
 [references/plan-format.md](references/plan-format.md) before writing the plan.
 
-## Step 1 — Gather the ticket
+## Step 1 — Resolve the argument, then fan out for context
 
-Resolve the argument:
+Resolve the argument first:
 
-- **Ticket key or URL** → fetch via the Jira MCP tools available in this
-  session (use ToolSearch to find them if not loaded; names vary by server —
-  look for issue-get/search tools). Pull: summary, description, acceptance
-  criteria, issue links, the parent epic, and any linked Confluence page
-  (fetch the page — the spec often contains constraints the ticket dropped).
-- **Pasted content** → use as-is, but say which context you're missing
-  (epic, spec) and ask for it only if the ACs don't stand alone.
+- **Ticket key or URL** → the ticket, its epic and its links are gathered
+  by lane **A1**; the linked Confluence spec by lane **A2** (see below).
+- **Pasted content** → use as-is (no A1), but say which context you're
+  missing (epic, spec) and ask for it only if the ACs don't stand alone.
 - **No Jira access and nothing pasted** → stop and ask for the ticket
   content. Never invent acceptance criteria.
 
-Number the ACs `AC1..ACn` in document order. If the ticket has no explicit
-AC section, extract testable statements from the description and present
-them as "derived ACs — confirm before relying on this plan."
+Then locate the target repo (from the ticket, or ask once) — prefer a local
+checkout; otherwise pull context via `glab` (`glab repo clone`, or
+`glab api` for file reads on GitLab).
 
-## Step 2 — Gather the code context
+**Dispatch the context wave.** Three parallel read-only agents, prompt
+templates and merge rules in
+[references/agent-fanout.md](references/agent-fanout.md) — use those
+templates rather than improvising, because the plan's reproducibility
+depends on the lanes having fixed scope:
 
-The plan must fit the service it targets. Locate the repo (from the ticket,
-or ask once):
+- **A1 — ticket graph:** the ticket verbatim, the epic, and every linked /
+  blocking / dependent ticket, including any AC in a *linked* ticket that
+  constrains this one. Constraints inherited from a blocker are the ones
+  plans usually miss.
+- **A2 — spec:** the linked Confluence page(s) — specifically what the spec
+  says that the ticket does not.
+- **A3 — repo suite inventory:** `features/` scenarios and tags, every
+  godog step registration verbatim, how the integration suite is executed,
+  and the unit-test layout.
 
-- Prefer a local checkout if one exists; otherwise pull context via `glab`
-  (`glab repo clone`, or `glab api` for file reads on GitLab).
-- Read: the service README, the `features/` directory (existing godog
-  scenarios and their tags), and the step definitions (`*_steps.go`,
-  `steps/` — wherever `godog` step registrations live). Grep the handlers
-  the ticket touches.
+A1+A3 go out in one message; A2 joins them if a spec URL is already known,
+otherwise it goes the moment A1 returns with the URLs. Without a subagent
+runtime, do all three inline in lane order and say so in the summary — never
+skip a lane.
 
-Two things this buys: **layer assignment** grounded in what the repo
-actually has (unit vs godog integration vs contract), and **step-vocabulary
-reuse** — draft Gherkin should use existing steps wherever possible, not
-invent near-duplicates (see [references/godog-standards.md](references/godog-standards.md)).
+## Step 2 — Merge the wave
+
+Agents gather; you decide. Nothing from a lane reaches the plan unchecked:
+re-find any citation you intend to quote, and if a lane came back
+`unavailable`, either do its work inline or name the gap in the summary —
+never both skip it and stay quiet.
+
+**Number the ACs — once, here, from A1's verbatim AC block** (or the pasted
+text): `AC1..ACn` in document order. No lane numbers ACs and no lane invents
+one; A2's constraints and A3's vocabulary never become ACs. A spec
+constraint the ticket omits becomes a `Verifies: implied` test in Step 4 and
+a line under **AC issues** — not an AC the planner minted for itself. If the
+ticket has no explicit AC section, extract testable statements from the
+description and present them as "derived ACs — confirm before relying on
+this plan."
+
+Two things A3 buys: **layer assignment** grounded in what the repo actually
+has (unit vs godog integration vs contract), and **step-vocabulary reuse** —
+draft Gherkin must use the step patterns A3 returned wherever they fit, not
+invent near-duplicates (see
+[references/godog-standards.md](references/godog-standards.md)). If A3 came
+back `unavailable` (no checkout reachable), the layer assignments are
+ungrounded guesses — say that in the summary rather than presenting them as
+fitted to the repo.
 
 ## Step 3 — Testability triage (do this BEFORE planning)
 

@@ -12,7 +12,10 @@ persistence and Kafka messaging. Two skills:
   up. Classifies every AC and planned test as covered / partial / missing
   with grep-verified evidence from Go unit tests AND godog feature files,
   walks the failure-path checklists (HTTP / Kafka consumer / Spanner
-  persistence), and reports SUFFICIENT / INSUFFICIENT. Every verdict carries
+  persistence), and reports SUFFICIENT / INSUFFICIENT. Evidence is
+  inventoried by parallel agents and every `covered` verdict is then
+  attacked by an independent skeptic agent — only verdicts surviving
+  refutation stay `covered`. Every verdict carries
   a derived confidence (`high`/`medium`/`low`) and a line saying what would
   raise it, so a green report tells you where it is thin. **Advisory only**
   — it does not gate; an SDET makes the merge call.
@@ -43,6 +46,13 @@ files — change them by MR, and both skills pick the change up:
 
 - `skills/test-planner/references/plan-format.md` — the canonical plan
   format, byte-compatible with the `test-planner` CLI.
+- `skills/test-planner/references/agent-fanout.md` — the agent fan-out
+  contract used by both skills: the planner's context lanes (ticket graph /
+  spec / repo suite inventory), the reviewer's evidence lanes (unit tests /
+  feature files / step wiring — deliberately blind to each other) and its
+  per-verdict skeptic agents, plus the return envelope, the merge rules
+  (agents gather, the caller decides; every agent citation re-grepped) and
+  the no-subagent fallback.
 - `skills/test-planner/references/godog-standards.md` — godog runner/layout
   (go test + `godog.TestSuite{TestingT}`; the CLI is deprecated), scenario
   quality rules, legacy tag-expression syntax, and the documented house

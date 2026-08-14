@@ -37,24 +37,49 @@ not block anything. An SDET makes the merge call.
 
 ## Step 2 — Inventory the coverage evidence
 
-Two evidence sources; inventory both — they satisfy different layers:
+**Dispatch the evidence wave** — three parallel read-only agents, one
+message, prompt templates and merge rules in
+[agent-fanout.md](${CLAUDE_PLUGIN_ROOT}/skills/test-planner/references/agent-fanout.md).
+Use those templates verbatim; improvised scopes are why two reviews of one
+MR disagree. Step 1's inputs are *not* fanned out — the diff, ticket and
+plan are your anchor and you read them yourself.
 
-- **Go unit tests** — `*_test.go` in and around the changed packages.
-  Enumerate test functions, `t.Run` subtests, and table-test case names.
-  Read the bodies: note what each actually *asserts*, not what its name
-  claims.
-- **godog feature files** — `features/**/*.feature`. Enumerate scenarios
-  and tags (`@integration`, `@smoke`, `@wip` — anything tagged `@wip` is
-  not evidence). Then verify each relevant scenario is **wired**: grep the
-  step registrations (`InitializeScenario`, `ctx.Step(`) for a pattern
-  matching every step. A scenario with undefined or pending steps is NOT
-  evidence — it's a wish. For Spanner/Kafka assertions, check the step
-  implementation reaches the right place: a row-assertion step should use
-  the direct Spanner client, an event-assertion step should consume the
-  topic.
-- If the suite runs cheaply, run it: `go test ./...` for unit; the
-  `@integration`-tagged godog suite (via the repo's integration build tag)
-  when a container runtime is available. A failing test is not evidence.
+- **B1 — unit tests:** `*_test.go` in and around the changed packages —
+  every test function, `t.Run` subtest and table-case name, and, from the
+  body, **what each actually asserts**, quoted. Not what the name claims.
+  Skips and build guards reported with them.
+- **B2 — feature files:** `features/**/*.feature` — every scenario, its
+  tags (`@integration`, `@smoke`, `@wip` — anything `@wip` is not
+  evidence), and every step **verbatim**.
+- **B3 — step wiring:** every step registration (`ctx.Step(`,
+  `InitializeScenario`) verbatim with the function it binds to, whether
+  anything reaches that registration, and what each bound function actually
+  touches — HTTP recorder, direct Spanner client, Kafka consumer, a fake,
+  or nothing.
+
+**B3 is blind to B2 on purpose, and you do the matching.** An agent that
+reads a scenario and then hunts for its steps will accept a near-match,
+because it knows what it wants to find; B3 is never told which scenarios
+exist. Match every step string B2 returned against B3's pattern list
+yourself. A scenario with one unmatched step, one `godog.ErrPending`
+binding, or a registration nothing reaches is NOT evidence — it's a wish.
+For Spanner/Kafka assertions, B3's "what it touches" line is the check: a
+row-assertion step must reach the direct Spanner client, an event-assertion
+step must consume the topic; one that goes back through the API's own read
+path proves less than it appears to.
+
+Then, in this session (never in a lane — execution is side-effecting and
+its result is yours to witness): if the suite runs cheaply, run it.
+`go test ./...` for unit; the `@integration`-tagged godog suite (via the
+repo's integration build tag) when a container runtime is available. A
+failing test is not evidence.
+
+Re-find every lane citation by grep before it reaches the report — an
+agent's citation is unverified until you have seen it, and a fan-out that
+multiplies claims must not multiply unchecked claims. If a lane returned
+`unavailable`, that part of the evidence surface was never inventoried:
+state it once on the verdict line (Step 4) instead of quietly reviewing a
+surface you did not see.
 
 Tag every piece of evidence you inventory as **executed** (you ran it in this
 review and it passed) or **static-only** (you read it). That tag is an input
@@ -91,9 +116,17 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
 ## Step 3b — Try to break every `covered`
 
 A `covered` verdict is a claim, and the claim is cheap until something has
-attacked it. For each verdict you are about to call `covered`, make one
-honest attempt to refute it: assume the AC is *not* covered and go find the
-reason. The standard attacks:
+attacked it. **Dispatch one skeptic agent per verdict you are about to call
+`covered`, all in one message** (template in
+[agent-fanout.md](${CLAUDE_PLUGIN_ROOT}/skills/test-planner/references/agent-fanout.md)).
+Each is given one AC, one citation, the repo path and the attack list —
+and nothing else: not the other verdicts, not your confidence, not the word
+"covered". A skeptic shown a page of green verdicts calibrates to the page.
+Skeptics run only on `covered` candidates; `partial` and `missing` are
+already the conservative call.
+
+With no subagent runtime, do the same attacks inline, one verdict at a
+time, and state the limitation on the verdict line. The standard attacks:
 
 - the assertion checks a proxy (status code, `err == nil`) instead of the
   outcome the AC actually names;
@@ -105,7 +138,8 @@ reason. The standard attacks:
 - the test is excluded in the configuration CI actually runs (build tag,
   tag expression, `t.Skip` behind an env var).
 
-Record one outcome per verdict:
+Record one outcome per verdict — the vocabulary is fixed, and it means the
+same whether a skeptic agent or an inline pass produced it:
 
 - **refuted** — the attack lands. It is not `covered`; downgrade to
   `partial` or `missing` and cite what broke it.
@@ -114,10 +148,14 @@ Record one outcome per verdict:
   `medium`, and the caveat goes in Notes.
 - **survived** — the attack fails cleanly.
 
-Queue item 1 replaces this inline pass with one skeptic agent per `covered`
-verdict, running in parallel. That vocabulary — refuted / survived-caveat /
-survived — is the contract between the two; the mechanism changes, the
-outcomes and their confidence consequences do not.
+**The evidence bar is symmetric.** A refutation is a claim too: before a
+`refuted` outcome moves a verdict, re-find the skeptic's citation. An
+objection nobody can cite is not a refutation — record it as
+`survived-caveat` with the doubt in Notes. A skeptic that returned nothing
+usable is not a `survived` either; attack that verdict yourself before
+keeping it. Downgrading on an uncitable objection would make the report
+pessimistic in exactly the unfalsifiable way the rubric refuses to be
+optimistic.
 
 ## Step 3c — Assign confidence
 
