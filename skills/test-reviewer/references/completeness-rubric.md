@@ -48,6 +48,15 @@ not). Judgment calls are allowed and must be explained in the report.
      or *the skeptic's residual was that it had not executed the suite
      itself*. Reserving one mark for one meaning is what lets a reviewer of
      the reviewer check the whole column with `grep -F`.
+   - **Saying what the plan asked for has its own form.** Explaining a
+     `partial` means restating the planned outcome, and that is where this
+     rule breaks most often: the sentence is *about* the plan, so it attracts
+     quotation marks even though the words are yours. Two correct shapes —
+     copy the plan's sentence exactly, punctuation and all, or cite
+     `plans/<KEY>.md:<line>` and paraphrase with no quotes at all. The
+     defect is the hybrid: your own summary wearing the plan's quotation
+     marks. It is not a lie and the verdict is usually right, which is
+     exactly why it survives review.
    - **Enforce it mechanically, at the end, on your own draft.** This rule is
      not reliably obeyed by intending to obey it: the quotes that break it are
      the ones you were most sure of, so they never prompt a check. Before the

@@ -256,11 +256,16 @@ both catch the class of error that intending-to-be-careful does not:
 
 1. **Every double-quoted string in the Evidence column, `grep -F`ed at the
    diff.** Not the ones you doubt — *all* of them, the confident ones
-   included, exactly as you typed them, punctuation and all. Each miss is
-   either retyped to the exact bytes or stripped of its quote marks (see the
-   rubric's evidence bar 2). Do this even when you re-grepped while
-   classifying: the string that reaches the report is often a tidied version
-   of the one you looked up.
+   included, exactly as you typed them, punctuation and all. **The whole
+   string, never a distinctive fragment of it:** grepping the one identifier
+   inside a quoted phrase confirms the identifier and tells you nothing about
+   the sentence you wrapped around it, which is the substitution that makes
+   this check feel done when it has not run. Each miss is either retyped to
+   the exact bytes or stripped of its quote marks (see the rubric's evidence
+   bar 2). Do this even when you re-grepped while classifying: the string
+   that reaches the report is usually a tidied version of the one you looked
+   up. Sentences describing what the *plan* required are the most frequent
+   offenders — quote the plan exactly or cite its line and drop the quotes.
 2. **Every AC and every planned test in the plan has a row**, and both tables
    carry the four columns above. A verdict you could not decide is a row
    saying so, never an absent row.
