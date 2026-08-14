@@ -97,6 +97,13 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
   AC's observable outcome. Re-find every citation by grep before writing
   it — a citation you cannot re-find is a hallucination, and the verdict
   falls back to `missing`.
+- **Double quotes mean verbatim-from-the-diff** (rubric evidence bar 2).
+  Re-grep every `"..."` you write in an Evidence cell, *as written*,
+  including the ones you are sure of. Elisions (`"...field is rejected"`),
+  tidied-up plan sentences, and quoted labels you coined for a scenario all
+  fail that grep. Command output, skeptic wording and your own summary are
+  evidence too, but they are not citations: give them prose or backticks,
+  never quotes.
 - **Layer must match the plan.** A planned `integration` test satisfied
   only by a unit test with mocked boundaries is `partial` — the assertion
   exists, but the behavior wasn't proven across the boundary the plan
@@ -210,6 +217,9 @@ container runtime)
 | AC2 | covered | medium | features/order_lifecycle.feature "Paying publishes order.paid" — asserts the event; static-only |
 | AC3 | partial | high | handlers/pay_test.go TestPay/rejects_paid — asserts 409 but not error.code |
 | AC4 | missing | high | — |
+
+<!-- Every "..." above is verbatim from the diff; observed output and skeptic
+     wording go in prose (`run output: expected 409, got 200`), not quotes. -->
 
 **What would raise it** (one line per verdict below `high`)
 - AC2 (medium → high): run the `@integration` suite (`go test -tags

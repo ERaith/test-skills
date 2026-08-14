@@ -27,10 +27,28 @@ not). Judgment calls are allowed and must be explained in the report.
 1. **Cite or it didn't happen.** Every non-missing verdict carries a
    citation the reviewer re-found by grep at review time. Un-refindable
    citations are hallucinations; the verdict is `missing`.
-2. **Wired means wired.** A godog scenario counts only if every step has a
+2. **A double-quoted string is a promise that those exact bytes are in the
+   diff.** House standard, and the rule that makes rule 1 checkable rather
+   than merely asserted. Inside an Evidence cell, `"..."` is reserved for
+   text copied character-for-character out of a file under review — a
+   scenario title, a step, an error code, an assertion string. Therefore:
+   - **Never elide, never reflow, never re-word.** `"...no guest name field
+     is rejected"` and a plan sentence tidied from `code "invalid_date"` into
+     `"with error code invalid_date"` are both un-greppable, and a reader who
+     greps for them concludes you invented them. If the exact string is long
+     or awkward, cite `file:line` and drop the quotation marks entirely — a
+     bare `file:line` claims nothing verbatim and so cannot break this rule.
+   - **Text that is not from the diff never takes double quotes.** Output you
+     observed from a command, a skeptic agent's wording, your own paraphrase:
+     all real evidence, none of it a citation. Introduce it in prose or in
+     backticks and say where it came from — `run output: expected status 400,
+     got 201`, or *the skeptic's residual was that it had not executed the
+     suite itself*. Reserving one mark for one meaning is what lets a
+     reviewer of the reviewer check the whole column with `grep -F`.
+3. **Wired means wired.** A godog scenario counts only if every step has a
    matching registration reachable from the suite's `InitializeScenario`.
    Pending/undefined/`@wip` = no coverage.
-3. **Passing means passing.** If the suite was runnable and the test
+4. **Passing means passing.** If the suite was runnable and the test
    failed, it is not evidence. If the suite was not runnable (no container
    runtime, no creds), the report says so — static evidence stands but is
    labeled unexecuted.
