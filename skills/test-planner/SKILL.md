@@ -97,13 +97,31 @@ One section per planned test, following plan-format.md exactly:
 - Integration-layer tests get draft Gherkin in godog style (godog-standards
   has the authoring rules — declarative, behavior-per-scenario, reuse steps).
   Unit-layer tests get a one-line description of the case, not Gherkin.
+- **Derive the edge cases per AC — don't wait for inspiration.** Run the
+  seven-step pipeline in
+  [references/test-design-techniques.md](references/test-design-techniques.md)
+  over each AC in order: variables/outcome → equivalence partitions
+  (including the invalid ones) → boundaries on ordered partitions →
+  decision table where ≥2 conditions decide the outcome → state transitions
+  (all-transitions is the default for an HTTP state machine) → the pruned
+  heuristic sweep → protocol failure paths. Same pipeline, same order, every
+  time: the reviewer re-runs it backwards to find gaps, and the two lists are
+  only comparable if the derivation is fixed rather than improvised.
 - **Add the failure paths the ACs forgot.** For every endpoint the ticket
   touches, walk the failure-path checklist in
   [references/completeness-rubric.md](../test-reviewer/references/completeness-rubric.md)
   (auth, validation, not-found, conflict, dependency failure, duplicate
-  delivery where events are involved) and add `Type: failure` tests for the
-  applicable ones — marked `Verifies: implied` when no AC states them. ACs
-  describe the happy path; production incidents live in what they didn't say.
+  delivery where events are involved) — with the RFC 9110 obligations from
+  test-design-techniques.md §7 for what each response must actually assert —
+  and add `Type: failure` tests for the applicable ones, marked
+  `Verifies: implied` when no AC states them. ACs describe the happy path;
+  production incidents live in what they didn't say.
+- **Collapse before emitting.** Derived cases are coverage items, not plan
+  entries: a validation matrix is one unit table test with its cases listed,
+  and the integration layer gets one representative per partition / boundary
+  / status code. Anything derived and then dropped is dropped *on the record*
+  (a line under **AC issues** or in the summary) — silent pruning is what
+  makes a plan uncheckable later.
 - Layer assignment rule of thumb for our stack: pure logic and mapping →
   unit (Go table tests); anything crossing a process boundary the repo
   tests with containers — HTTP round-trip, a Kafka message produced or

@@ -144,21 +144,35 @@ The plan assigns each test a layer; evidence must meet it:
 
 ## Failure-path checklists
 
-House standard (deep-research 2026-08-12 found no externally documented
-equivalent to defer to — treat this as ours to maintain). Walk each list
-against every endpoint / consumer / write path the diff touches; an
-applicable unchecked item is a gap even when all ACs are green. "Applicable"
-is a judgment call — record N/A verdicts with a word of why.
+*Which* paths we require is house standard (deep-research 2026-08-12 found no
+externally documented equivalent list to defer to — treat the selection as
+ours to maintain). *What each one means*, and what a conforming response must
+contain, is RFC 9110 — cited per line below, with the full obligation table
+in
+[test-design-techniques.md](../../test-planner/references/test-design-techniques.md)
+§7. Walk each list against every endpoint / consumer / write path the diff
+touches; an applicable unchecked item is a gap even when all ACs are green.
+"Applicable" is a judgment call — record N/A verdicts with a word of why.
 
 **HTTP endpoint:**
-- 400 malformed/invalid body (one representative validation case; the full
-  matrix belongs in unit tables)
-- 401/403 where the route is authenticated/authorized
-- 404 unknown resource
+- 400 malformed/invalid body [RFC 9110 §15.5.1] (one representative
+  validation case; the full matrix belongs in unit tables). Where the body
+  parses but the instructions can't be processed, 422 is the distinct code
+  [§15.5.21] and a wrong media type is 415 [§15.5.16] — an API collapsing
+  all three into 400 is a finding, not a shortcut.
+- 401/403 where the route is authenticated/authorized [§15.5.2, §15.5.4].
+  A 401 **MUST** carry `WWW-Authenticate` [§15.5.2] — assert the header, not
+  only the status.
+- 404 unknown resource [§15.5.5]; 405 for a known method the resource does
+  not support, which **MUST** carry `Allow` [§15.5.6].
 - 409 (or the API's convention) for state-machine/conflict violations
-- Dependency failure: downstream 5xx AND timeout → mapped error, no hang,
-  no partial side effects
-- Idempotency where the method claims it (PUT twice = one outcome)
+  [§15.5.10]
+- Dependency failure: downstream 5xx AND timeout → mapped error [§15.6.4,
+  §15.6.5], no hang, no partial side effects
+- Idempotency where the method claims it — PUT and DELETE are idempotent by
+  [§9.2.2], so twice = one outcome, asserted by *cardinality* (one row, one
+  event), not by a second 200. POST is not idempotent: what a duplicate
+  submission does must be *defined* somewhere, and the review says which.
 
 **Kafka consumer:**
 - Duplicate delivery → idempotent outcome (exactly one row; assert

@@ -111,7 +111,30 @@ For **each AC** and **each planned test**, assign `covered` / `partial` /
 - **Failure paths:** walk the rubric's checklists (HTTP, Kafka consumer,
   Spanner persistence) against every endpoint/consumer the diff touches,
   including the plan's `Verifies: implied` tests. Uncovered applicable
-  failure paths are gaps even when every AC is green.
+  failure paths are gaps even when every AC is green. What each response
+  must assert — including the two RFC 9110 `MUST`s (`WWW-Authenticate` on
+  401, `Allow` on 405) — is in
+  [test-design-techniques.md](${CLAUDE_PLUGIN_ROOT}/skills/test-planner/references/test-design-techniques.md)
+  §7.
+- **Edge-case gap check.** Re-derive the edge cases from the **ACs** using
+  the same seven-step pipeline the planner used
+  ([test-design-techniques.md](${CLAUDE_PLUGIN_ROOT}/skills/test-planner/references/test-design-techniques.md)),
+  then diff that list against the Step 2 evidence. Derive from the ACs, never
+  from the MR's tests — deriving from the code under review just re-describes
+  what was built. Two outcomes, and the difference is not cosmetic:
+  - the AC **itself names** the item (it states the 200-char limit, or names
+    the 409 on an invalid transition) and nothing exercises it → the item is
+    part of the AC's observable outcome: `partial`, axis named;
+  - the item is **derived, not stated** (an untested invalid partition, an
+    unmentioned boundary, a 405 path) → the AC's verdict is **unaffected**;
+    it goes under **Gaps and recommended tests** with the technique named
+    ("BVA, `title` length: no case at the storage limit").
+
+  The second rule is what keeps the verdict column meaningful: the derived
+  set is always larger than the AC set, so letting derived items downgrade
+  ACs would make every review INSUFFICIENT and the column would stop
+  discriminating. Gaps also never move confidence — that measures how sure
+  you are of a verdict, not how much coverage exists.
 
 ## Step 3b — Try to break every `covered`
 

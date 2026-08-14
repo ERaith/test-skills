@@ -53,7 +53,7 @@ committed steps — never a big broken WIP.
       structural: skeptic-survived + executed = high; static-only evidence
       caps at medium; ad-hoc plan caps overall confidence. Mirror the CLI
       fixtures' per-verdict confidence semantics.
-- [ ] 3. **test-design-techniques.md reference** (planner references/, read
+- [x] 3. **test-design-techniques.md reference** (planner references/, read
       by both skills): equivalence partitioning, boundary value analysis,
       state-transition testing, decision tables (ISTQB-grounded);
       Hendrickson test-heuristics categories; RFC 9110 grounding for the
@@ -330,3 +330,154 @@ an agent verdict auditable enough to gate on": not a better prompt, but an
 architecture where the load-bearing judgments are made by parties that
 cannot see each other's expectations, and every claim in either direction
 carries a citation the caller re-found.
+
+### 2026-08-14 — queue item 3: test-design-techniques reference
+
+**Done.** New shared reference
+`skills/test-planner/references/test-design-techniques.md`: how to derive the
+cases an AC implies but does not say. Read by both skills, in opposite
+directions — planner Step 4 forward (AC → coverage items → planned tests),
+reviewer Step 3 backward (same derivation, then diff against the evidence).
+
+- **A fixed seven-step pipeline**, not a menu: variables/outcome → equivalence
+  partitioning → BVA → decision table → state transition → heuristic sweep →
+  protocol failure paths. Steps 2–5 are ISTQB black-box techniques with their
+  coverage criteria quoted from CTFL v4.0.1 §4.2.1–§4.2.4; step 6 is the
+  Hendrickson/Lyndsay/Emery cheat sheet pruned to this domain (checklist-based
+  testing, §4.4.3); step 7 is RFC 9110.
+- **Worked examples are the real fixtures**, not invented ones: the EP /
+  decision-table example is the tasks API (`~/forge/test-planner`), the
+  state-transition example is the orders API's pending/paid/cancelled machine
+  — 3 states, 2 valid transitions, 6 all-transition cells.
+- **Wired in.** Planner Step 4 gains the derivation bullet plus a *collapse
+  before emitting* rule; reviewer Step 3 gains the edge-case gap check; the
+  rubric's HTTP failure-path checklist now carries per-line RFC 9110 section
+  citations and the two `MUST`s.
+
+**Design decisions, and why.**
+
+1. **Order is load-bearing, and fixed.** BVA needs EP's partitions; the
+   heuristic sweep is last so it only catches what the models structurally
+   cannot see. Steps 2–5 enumerate from a model and therefore reproduce across
+   runs; step 6 does not, which is exactly why it is a bounded table with
+   named attacks rather than "think about edge cases" — §4.4.3's own warning
+   is that checklist items which are too general are worthless.
+2. **Derived items are gaps, never verdicts** (the load-bearing rule). The
+   derived set is always larger than the AC set, so if a derived miss could
+   downgrade an AC, every review would be INSUFFICIENT and the verdict column
+   would stop discriminating — it would mean "the reviewer ran its checklist".
+   The one exception is precise: when the *AC itself* names the item (it
+   states the 200-char limit, it names the 409), the item is part of the AC's
+   observable outcome and its absence is `partial`. Measured below: the
+   derived gap list is **identical (9 gaps) on both the full and the partial
+   fixture branch** — a column that cannot tell those two suites apart has no
+   business touching the verdict.
+3. **All-transitions coverage by default for HTTP state machines** (house
+   standard; §4.2.4 asks it only of mission/safety-critical software). On a
+   public API an invalid transition is not exotic — it is what a retry, a
+   double-click or a competing consumer produces, and the answer to it is a
+   contract. The orders fixture makes the cost of the weaker default concrete:
+   pay + cancel on a pending order is 100% valid-transitions coverage and 33%
+   all-transitions, with the entire 409 contract untested behind a
+   green-looking suite.
+4. **RFC 9110 grounds the meaning, not the menu.** Which failure paths we
+   require stays house standard; the RFC fixes what each code means and what
+   the response must contain. Two are directly assertable `MUST`s —
+   `WWW-Authenticate` on 401 (§15.5.2), `Allow` on 405 (§15.5.6) — so those
+   became "assert the header, not only the status". Same for idempotency
+   (§9.2.2): PUT/DELETE owe a *cardinality* assertion, and POST — explicitly
+   not idempotent — owes a **defined** duplicate-submission behaviour, since
+   second-create / 409 / idempotency-key are all legitimate and only one is
+   implemented.
+5. **The derivation adds no plan syntax.** No `Technique:` field — the plan
+   stays byte-compatible with the CLI, so attribution lives in the test title
+   and in the reviewer's gap lines. Two extra rules keep the derivation from
+   exploding the plan: collapse to the layer (a 12-row matrix is one unit
+   table test; integration gets one representative per partition/boundary/
+   code), and Each Choice rather than Cartesian combination (§4.2.1, citing
+   Ammann 2016).
+6. **Nothing derived may vanish silently.** Every partition, boundary,
+   feasible column and transition cell ends up either mapped to a test id or
+   written down as a deliberate omission — otherwise the reviewer cannot check
+   the planner's work, which is the whole point of both skills sharing one
+   pipeline.
+
+**Verified.** No Go in this repo (build/test N/A). What was actually run:
+
+- `claude plugin validate` passes (the one intentional no-version warning);
+  14 reference links across the skills resolve, 0 broken; `plan-format.md`
+  byte-identical (`git diff --stat` empty on it).
+- **Every citation machine-checked against the primary source, not memory.**
+  Downloaded RFC 9110 and the CTFL v4.0.1 syllabus PDF; a script extracted all
+  17 RFC section numbers cited across the skills and confirmed each exists
+  **and** that its heading matches the code it is cited for (§15.5.6 = 405
+  Method Not Allowed, etc.) — 17/17. Seven quoted RFC claims (both `MUST`s,
+  the idempotency definition, PUT/DELETE idempotent, 201-Location, the 400 and
+  422 definitions) matched verbatim, 7/7. Both ISTQB block quotes matched the
+  syllabus verbatim after whitespace normalisation, plus 15 further syllabus
+  claims (EP coverage incl. invalid partitions, Each Choice/Ammann, 2-value
+  Craig/Myers, decision-table coverage, all three state-transition criteria,
+  defect masking, Brykczynski's checklist caution). Two initial mismatches
+  were **real citation defects and were fixed**: the EP quote had silently
+  dropped a parenthetical, and the 3-value BVA example had the wrong
+  mis-implementation (the syllabus's is `if (x ≤ 10)` implemented as
+  `if (x = 10)`, which 2-value data 10/11 cannot detect and x=9 can — my first
+  draft wrote `if (x < 10)`, which 2-value *does* catch).
+- **The worked examples were executed against the running fixtures.** Built
+  and ran both read-only fixture APIs from a `/tmp` copy. The orders state
+  table was exercised cell by cell — all 6: `pending`+pay/cancel → 200 with
+  the state changed, and all four invalid cells → 409 `invalid_transition`
+  with the state unchanged. The published table is measured behaviour.
+- **The tasks-API partition findings are live, not paper.** Probed 14 requests:
+  five *distinct* invalid partitions (empty title, absent field, malformed
+  JSON, wrong JSON type, empty body) all return the identical
+  `400 {"error":"title is required"}` — a client cannot tell a parse failure
+  from a validation failure; non-numeric, negative and overflowing `{id}` all
+  land in the 404 partition; `text/plain` is accepted (no 415); 201 carries no
+  `Location`; 405 *is* emitted with a correct per-path `Allow` (`GET, HEAD` /
+  `POST`) and nothing tests it; a whitespace-only title is accepted though AC2
+  says "missing or empty"; a duplicate POST silently creates a second task.
+- **The reviewer-direction rule was executed** (`/tmp/tdt-check/derive.py`):
+  the pipeline's 19 derived items for PROJ-101, classified AC-stated vs
+  derived, matched against both fixture branches. Result — the AC-stated rule
+  reproduces the item-2 ground-truth verdict vector **exactly on both
+  branches** (full: covered×4; partial: covered/missing/partial/missing, with
+  AC3's `partial` falling out of the unasserted `completed` flag), and the
+  derived rule adds 9 gaps + 1 recorded N/A **without moving any verdict**.
+  8 of those 9 gaps are behaviours the live probe above confirmed actually
+  exist and are untested; only the BVA title-length boundary is unconfirmable
+  (the in-memory fixture has no storage limit). Every one of the 19 items
+  classified AC-stated-or-derived without a coin flip.
+
+Deliberately **not** run: the skills themselves as live agents. The item-4
+smoke eval is the clean-room exercise, and PROVING-GROUND rule 1 forbids the
+session that wrote the reference from grading it. Note also that the derived
+item list here was hand-authored by the builder from the pipeline — what the
+script *executes* is the classification and matching rule, not the derivation
+itself. Rung 1 is where a fresh session's derivation gets compared to a
+reference one.
+
+**Learned / for the next iterations.**
+
+- The identical 9-gap list on both branches is the single most useful number
+  this item produced: it is direct evidence for keeping the gap channel and
+  the verdict channel separate, and it suggests a scorecard metric for rungs
+  1–5 — *gap-list stability* (should be near-identical across branches of one
+  service) versus *verdict accuracy* (must discriminate). If a future run's
+  gap list starts varying by branch, the reviewer is deriving from the code
+  under review instead of from the ACs.
+- Item 4 now has a second thing to check besides verdicts: whether a
+  clean-room reviewer reports the derived gaps at all. A skill that produces
+  the right verdicts and an empty Gaps section has silently dropped step 7.
+- PDF-sourced citations need machine checking, full stop. Two of my quotes
+  were wrong in ways that read perfectly fluently — one dropped parenthetical
+  and one inverted example. Any rubric line citing a standard should be
+  greppable against a downloaded copy of that standard as part of verify.
+
+**For planning sync:** this closes the "where do edge cases come from?"
+question with a citable answer instead of model intuition — ISTQB for the
+model-based half, Hendrickson for the experience-based half, RFC 9110 for the
+protocol half — and, more importantly for D1, it separates *coverage gaps*
+from *AC verdicts* as two independent output channels. The gating carve-out
+sketched in item 2 ("gate only on high-confidence verdicts") stays coherent
+under this: gaps inform, verdicts decide, and neither leaks into the other.
