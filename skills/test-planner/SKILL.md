@@ -85,6 +85,23 @@ ACs are untestable, stop and report back instead of emitting a vacuous plan:
 pushing ambiguity back to the ticket before code exists is this skill's
 highest-value output.
 
+**Triage the spec too, not just the ACs.** Design notes and Confluence pages
+carry rules the ticket never mentions, and some of them are openly unsettled —
+"not decided yet", "TBD", "we should probably", a question left in a comment.
+Those are in scope for the plan and they get the same treatment as a vague AC:
+list them under **AC issues** (labelled as a spec open question, with the
+source), and plan no test that depends on the answer. There are two ways to
+get this wrong and both showed up in practice:
+
+- *dropping it* — the rule never appears in the plan, so nobody learns the
+  ticket shipped with an open question underneath it;
+- *deciding it* — writing a test that asserts whatever the code does today,
+  which silently promotes an undecided question into a regression lock and
+  converts the next product decision into a test failure.
+
+Asserting current behaviour is only correct once someone has decided that is
+the behaviour. Until then, name it and leave it uncovered on the record.
+
 ## Step 4 — Write the plan
 
 One section per planned test, following plan-format.md exactly:
@@ -134,6 +151,22 @@ One section per planned test, following plan-format.md exactly:
   Spanner AND publishes to Kafka, the plan must demand both outcomes
   asserted — the row (named back-door step per godog-standards) and the
   consumed event — ideally in one scenario, so partial writes can't pass.
+- **A state change is proven by the state, not by the response that claims
+  it.** Whenever an AC's outcome is "…and the <thing>'s status becomes X" —
+  a transition, a soft delete, a counter increment, anything the next
+  request would see — the success case owes an assertion on the state
+  *after* the call: re-read it (a GET, a list, a back-door row read) and
+  assert X. The response body echoing X is the handler agreeing with
+  itself; a handler that returns 200 with the new status and never commits
+  passes every response-only test you can write.
+
+  Watch for the asymmetry, because it is the common shape and it looks
+  thorough: plans routinely re-read on the **rejection** cases (to show the
+  status did *not* change on a 409) and take the response's word for it on
+  the **success** cases. That is backwards — the unchanged assertion is the
+  cheap one to satisfy accidentally, since not-persisting is exactly what a
+  broken write does. If a `Then` re-reads state anywhere in the plan, every
+  state-changing success case in that plan needs one too.
 
 ## Step 5 — Deliver
 

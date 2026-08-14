@@ -32,19 +32,28 @@ not). Judgment calls are allowed and must be explained in the report.
    than merely asserted. Inside an Evidence cell, `"..."` is reserved for
    text copied character-for-character out of a file under review — a
    scenario title, a step, an error code, an assertion string. Therefore:
-   - **Never elide, never reflow, never re-word.** `"...no guest name field
-     is rejected"` and a plan sentence tidied from `code "invalid_date"` into
-     `"with error code invalid_date"` are both un-greppable, and a reader who
-     greps for them concludes you invented them. If the exact string is long
+   - **Never elide, never reflow, never re-word.** Three ways this happens,
+     in the order they actually occur: an ellipsis standing in for the part
+     of a scenario name you did not retype; a sentence from the plan or the
+     ticket quoted after being tidied into your own grammar; and a label you
+     coined for a scenario, quoted as if the repo had named it that. All
+     three read as citations and none of them can be found, so a reader who
+     greps concludes you invented the evidence. If the exact string is long
      or awkward, cite `file:line` and drop the quotation marks entirely — a
      bare `file:line` claims nothing verbatim and so cannot break this rule.
    - **Text that is not from the diff never takes double quotes.** Output you
      observed from a command, a skeptic agent's wording, your own paraphrase:
      all real evidence, none of it a citation. Introduce it in prose or in
-     backticks and say where it came from — `run output: expected status 400,
-     got 201`, or *the skeptic's residual was that it had not executed the
-     suite itself*. Reserving one mark for one meaning is what lets a
-     reviewer of the reviewer check the whole column with `grep -F`.
+     backticks and say where it came from — `run output: <what it printed>`,
+     or *the skeptic's residual was that it had not executed the suite
+     itself*. Reserving one mark for one meaning is what lets a reviewer of
+     the reviewer check the whole column with `grep -F`.
+   - **Enforce it mechanically, at the end, on your own draft.** This rule is
+     not reliably obeyed by intending to obey it: the quotes that break it are
+     the ones you were most sure of, so they never prompt a check. Before the
+     report leaves your hands, run the Step 4 pre-flight — pull every
+     double-quoted string out of the Evidence column and `grep -F` each one at
+     the diff. Fix or unquote every miss.
 3. **Wired means wired.** A godog scenario counts only if every step has a
    matching registration reachable from the suite's `InitializeScenario`.
    Pending/undefined/`@wip` = no coverage.

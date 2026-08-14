@@ -227,7 +227,14 @@ container runtime)
   read-only so far.
 
 ## Planned-test verdicts
-<same four-column table for T1..Tn, same "what would raise it" treatment>
+
+| Test | Verdict | Confidence | Evidence |
+|------|---------|------------|----------|
+| T1 | covered | high | ... |
+
+Same four columns, same header, same "what would raise it" treatment — do not
+add a `Verifies` column or re-order them; the plan already says what each test
+verifies, and a stable shape is what makes a run diffable against the last one.
 
 ## Gaps and recommended tests
 <per gap: what's missing, plus a ready-to-add skeleton — Gherkin reusing
@@ -241,6 +248,22 @@ computed>
 
 Confidence: <n> high / <n> medium / <n> low across <n> verdicts.
 ```
+
+### Pre-flight before you emit it
+
+Two mechanical checks on your own draft, in this order. Both are cheap, and
+both catch the class of error that intending-to-be-careful does not:
+
+1. **Every double-quoted string in the Evidence column, `grep -F`ed at the
+   diff.** Not the ones you doubt — *all* of them, the confident ones
+   included, exactly as you typed them, punctuation and all. Each miss is
+   either retyped to the exact bytes or stripped of its quote marks (see the
+   rubric's evidence bar 2). Do this even when you re-grepped while
+   classifying: the string that reaches the report is often a tidied version
+   of the one you looked up.
+2. **Every AC and every planned test in the plan has a row**, and both tables
+   carry the four columns above. A verdict you could not decide is a row
+   saying so, never an absent row.
 
 `INSUFFICIENT` = any AC `missing`, or a judgment call per the rubric's
 severity guidance (explain it when you make it). Confidence is not a
