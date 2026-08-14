@@ -247,6 +247,8 @@ halves missing, refutation caveats from Step 3b, line-coverage signal if
 computed>
 
 Confidence: <n> high / <n> medium / <n> low across <n> verdicts.
+Citation pre-flight: <n> quoted strings, <n> re-found by grep -F; <n> narrowed
+or unquoted.
 ```
 
 ### Pre-flight before you emit it
@@ -275,6 +277,17 @@ both catch the class of error that intending-to-be-careful does not:
    otherwise come out re-marked-up as backticks, which is the same defect).
    A quote that survives `grep -F` as typed is worth more than a longer one
    that does not.
+
+   **Run it as a loop, not as an intention, and report the count.** A
+   self-check that leaves no trace is a self-check that quietly does not
+   happen — write the draft out, extract every double-quoted string from the
+   Evidence column mechanically, `grep -F` each one, and fix every miss. Then
+   put the tally in the report's Notes: `Citation pre-flight: <n> quoted
+   strings, <n> re-found by grep -F; <n> narrowed or unquoted.` The number is
+   the point. It is checkable by anyone holding the diff, it is falsifiable
+   the moment one string is not there, and writing it forces the extraction
+   that the check consists of. A tally you cannot honestly write is a report
+   that is not finished.
 2. **Every AC and every planned test in the plan has a row**, and both tables
    carry the four columns above. A verdict you could not decide is a row
    saying so, never an absent row.

@@ -77,7 +77,15 @@ not). Judgment calls are allowed and must be explained in the report.
      the ones you were most sure of, so they never prompt a check. Before the
      report leaves your hands, run the Step 4 pre-flight — pull every
      double-quoted string out of the Evidence column and `grep -F` each one at
-     the diff. Fix or unquote every miss.
+     the diff. Fix or unquote every miss. **Then report the count**
+     (`Citation pre-flight: <n> quoted strings, <n> re-found by grep -F`).
+     Measured, not assumed: across eight graded reviews that carried this rule
+     without the tally, not one recorded having run the check, and each of the
+     four that broke rule 2 broke it in a way the loop would have caught — an
+     ellipsis inside a quote, the reviewer's own summary of a skeptic's
+     objection in quotes, a plan sentence re-marked-up. The instruction was
+     already there; what was missing was an output that goes wrong when the
+     check is skipped.
 3. **Wired means wired.** A godog scenario counts only if every step has a
    matching registration reachable from the suite's `InitializeScenario`.
    Pending/undefined/`@wip` = no coverage.
