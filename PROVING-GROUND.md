@@ -55,7 +55,7 @@ No grading your own homework.
 The measurement is: *would an independent agent, given only what a real
 user would have, reproduce the expected outcomes?* So:
 
-1. **Clean-room invocation.** The agent-under-test is a FRESH `claude -p`
+1. **Clean-room invocation.** The agent-under-test is a FRESH `claude -p --model sonnet` (the target RUNTIME tier — never the heavy build model; evaluating on the build model certifies a skill that only works at Opus-level reasoning)
    session per run: it gets the skill (SKILL.md + references), the eval
    repo checkout, and the task input (ticket file / MR-style diff) —
    nothing else. It is never the same session that built the scenario,

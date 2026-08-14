@@ -63,6 +63,21 @@ a rung's results demand it: fan-out as the default runtime path
 (calibration/high-assurance only), the SHA-keyed step catalog, and gating.
 The skeptic hold still governs whether a rung PASSES (PROVING-GROUND.md).
 
+## OVERNIGHT DIRECTIVE (2026-08-14 night — autonomous, no human present)
+
+Go DEEP on R1, not WIDE to R2. Allowed autonomous work, in priority order:
+  1. Converge R1 to a genuinely PASSED state: build the rung, eval BOTH
+     skills, fix whichever (planner/reviewer) the scorecard shows is weak,
+     re-eval, repeat until the advance gate + skeptic hold pass. Merge each
+     improvement to main. Log every calibration change and every scorecard.
+  2. Eval-methodology research (well-defined, needs no human): how teams
+     validate LLM judges/graders — gold-set construction, inter-rater
+     agreement, calibration, LLM-as-judge failure modes. Fold findings into
+     PROVING-GROUND scoring as cited commits.
+HARD STOP: do NOT build R2 or ANY new-complexity rung (Spanner/Kafka/3-svc/
+mess-batch). New complexity is a HUMAN decision at tomorrow's checkpoint.
+If R1 passes and research is done, idle — do not invent new scope.
+
 ## Queue
 
 - [x] 1. Agent fan-out in both skills (context/evidence lanes + skeptic).
